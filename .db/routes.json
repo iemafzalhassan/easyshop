@@ -1,0 +1,3 @@
+{
+  "/products/*": "/products/$1"
+}

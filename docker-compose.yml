@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: iemafzal/easyshop:latest
+    container_name: easyshop-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:8000
+    networks:
+      - easyshop-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      maintainer: "Md. Afzal Hassan Ehsani"
+      maintainer.linkedin: "https://www.linkedin.com/in/iemafzalhassan/"
+
+networks:
+  easyshop-network:
+    name: easyshop-network
+    driver: bridge 
