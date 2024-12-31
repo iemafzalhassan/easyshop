@@ -87,7 +87,7 @@ docker network create easyshop-network
 
 # Run container
 docker run -d \
-  --name easyshop-frontend \
+  --name easyshop \
   --network easyshop-network \
   -p 3000:3000 \
   -e NODE_ENV=production \
@@ -118,15 +118,14 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 easyshop-frontend/
 ├── src/
-│   ├── app/              # Next.js app router
+│   ├── app/             # Next.js app router
 │   │   ├── (auth)/      # Auth group routes
 │   │   ├── products/    # Product routes
 │   │   └── shops/       # Shop routes
 │   ├── components/      # React components
-│   ├── lib/            # Utilities & store
-│   └── types/          # TypeScript types
-├── public/             # Static assets
-└── docker/            # Docker configs
+│   ├── lib/             # Utilities & store
+│   └── types/           # TypeScript types          
+└── public/              # Static assets
 ```
 
 ## API Integration
@@ -181,4 +180,4 @@ This project is licensed under the MIT License.
 
 Md. Afzal Hassan Ehsani - [@iemafzalhassan](https://linkedin.com/in/iemafzalhassan)
 
-Project Link: [https://github.com/yourusername/easyshop-frontend](https://github.com/yourusername/easyshop-frontend)
+Project Link: [https://github.com/iemafzalhassan/easyshop](https://github.com/iemafzalhassan/easyshop)
