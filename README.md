@@ -4,7 +4,7 @@
 [![Stars](https://img.shields.io/github/stars/iemafzalhassan/easyshop)](https://github.com/iemafzalhassan/easyshop)
 ![GitHub last commit](https://img.shields.io/github/last-commit/iemafzalhassan/easyshop?color=red)
 <p align="center">
-  <img src="public/logo.svg" alt="EasyShop Logo" width="200"/>
+  <img src="frontend/public/logo.svg" alt="EasyShop Logo" width="200"/>
 </p>
 
 A modern e-commerce platform built with Next.js 14, featuring server-side rendering, real-time updates, and a seamless shopping experience.

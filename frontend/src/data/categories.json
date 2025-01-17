@@ -1,0 +1,403 @@
+{
+  "categories": {
+    "gadgets": [
+      {
+        "name": "Mobiles",
+        "img": "/assets/images/products/gadgets/iphone11.png",
+        "search_link": "/shops/gadgets/mobiles"
+      },
+      {
+        "name": "Laptops",
+        "img": "/assets/images/products/gadgets/macbookairm1.png",
+        "search_link": "/shops/gadgets/laptops"
+      },
+      {
+        "name": "Smart Watches",
+        "img": "/assets/images/products/gadgets/SamusungGalaxyWatch.png",
+        "search_link": "/shops/gadgets/watches"
+      },
+      {
+        "name": "Headphones",
+        "img": "/assets/images/products/gadgets/WH-1000XM4.png",
+        "search_link": "/shops/gadgets/headphones"
+      },
+      {
+        "name": "Routers",
+        "img": "/assets/images/products/gadgets/TUFGamingAX5400.png",
+        "search_link": "/shops/gadgets/routers"
+      },
+      {
+        "name": "Gaming",
+        "img": "/assets/images/products/gadgets/ninotendo.png",
+        "search_link": "/shops/gadgets/gaming"
+      },
+      {
+        "name": "Accessories",
+        "img": "/assets/images/products/gadgets/chargingpad.png",
+        "search_link": "/shops/gadgets/accessories"
+      }
+    ],
+    "clothing": [
+      {
+        "name": "Women",
+        "search_link": "/shops/clothing/women",
+        "subcategories": [
+          {
+            "name": "Dresses",
+            "search_link": "/shops/clothing/dresses",
+            "items": [
+              { "name": "Summer Dress", "img": "/assets/images/products/clothing/dress1.png" },
+              { "name": "Evening Dress", "img": "/assets/images/products/clothing/dress2.png" },
+              { "name": "Casual Dress", "img": "/assets/images/products/clothing/dress3.png" }
+            ]
+          },
+          {
+            "name": "Tops",
+            "search_link": "/shops/clothing/tops",
+            "items": [
+              { "name": "Casual Top", "img": "/assets/images/products/clothing/top1.png" },
+              { "name": "Party Top", "img": "/assets/images/products/clothing/top2.png" },
+              { "name": "Summer Top", "img": "/assets/images/products/clothing/top3.png" },
+              { "name": "Evening Top", "img": "/assets/images/products/clothing/top4.png" }
+            ]
+          },
+          {
+            "name": "Skirts",
+            "search_link": "/shops/clothing/skirts",
+            "items": [
+              { "name": "Mini Skirt", "img": "/assets/images/products/clothing/skirt1.png" },
+              { "name": "Maxi Skirt", "img": "/assets/images/products/clothing/skirt2.png" },
+              { "name": "Pleated Skirt", "img": "/assets/images/products/clothing/skirt3.png" },
+              { "name": "A-Line Skirt", "img": "/assets/images/products/clothing/skirt4.png" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Men",
+        "search_link": "/shops/clothing/men",
+        "subcategories": [
+          {
+            "name": "Hoodies",
+            "search_link": "/shops/clothing/hoodies",
+            "items": [
+              { "name": "Classic Hoodie", "img": "/assets/images/products/clothing/hoodie1.png" },
+              { "name": "Sport Hoodie", "img": "/assets/images/products/clothing/hoodie2.png" },
+              { "name": "Zip Hoodie", "img": "/assets/images/products/clothing/hoodie3.png" }
+            ]
+          },
+          {
+            "name": "Blazers",
+            "search_link": "/shops/clothing/blazers",
+            "items": [
+              { "name": "Formal Blazer", "img": "/assets/images/products/clothing/blazer1.png" },
+              { "name": "Casual Blazer", "img": "/assets/images/products/clothing/blazer2.png" },
+              { "name": "Wedding Blazer", "img": "/assets/images/products/clothing/blazer3.png" }
+            ]
+          },
+          {
+            "name": "Coats",
+            "search_link": "/shops/clothing/coats",
+            "items": [
+              { "name": "Winter Coat", "img": "/assets/images/products/clothing/coat1.png" },
+              { "name": "Trench Coat", "img": "/assets/images/products/clothing/coat2.png" },
+              { "name": "Rain Coat", "img": "/assets/images/products/clothing/coat3.png" }
+            ]
+          }
+        ]
+      }
+    ],
+    "furniture": [
+      {
+        "name": "Beds",
+        "img": "/assets/images/products/furniture/furn1.png",
+        "search_link": "/shops/furniture/beds"
+      },
+      {
+        "name": "Tables",
+        "img": "/assets/images/products/furniture/furn10.png",
+        "search_link": "/shops/furniture/tables"
+      },
+      {
+        "name": "Sofa",
+        "img": "/assets/images/products/furniture/furn20.png",
+        "search_link": "/shops/furniture/sofa"
+      },
+      {
+        "name": "Chairs",
+        "img": "/assets/images/products/furniture/furn30.png",
+        "search_link": "/shops/furniture/chairs"
+      }
+    ],
+    "books": [
+      {
+        "name": "Comic Books",
+        "img": "/assets/images/products/books/book1.png",
+        "search_link": "/shops/books/comics"
+      },
+      {
+        "name": "Science Fiction",
+        "img": "/assets/images/products/books/book5.png",
+        "search_link": "/shops/books/science-fiction"
+      },
+      {
+        "name": "Literature",
+        "img": "/assets/images/products/books/book10.png",
+        "search_link": "/shops/books/literature"
+      },
+      {
+        "name": "Horror Fiction",
+        "img": "/assets/images/products/books/book15.png",
+        "search_link": "/shops/books/horror-fiction"
+      },
+      {
+        "name": "Novels",
+        "img": "/assets/images/products/books/book20.png",
+        "search_link": "/shops/books/novels"
+      },
+      {
+        "name": "Romantic Poetry",
+        "img": "/assets/images/products/books/book25.png",
+        "search_link": "/shops/books/romantic-poetry"
+      }
+    ],
+    "bags": [
+      {
+        "name": "Hand Bags",
+        "img": "/assets/images/products/bags/bag1.png",
+        "search_link": "/shops/bags/hand-bags"
+      },
+      {
+        "name": "Laptop Bags",
+        "img": "/assets/images/products/bags/bag4.png",
+        "search_link": "/shops/bags/laptop-bags"
+      },
+      {
+        "name": "Shoulder Bags",
+        "img": "/assets/images/products/bags/bag7.png",
+        "search_link": "/shops/bags/shoulder-bags"
+      },
+      {
+        "name": "Purse",
+        "img": "/assets/images/products/bags/bag10.png",
+        "search_link": "/shops/bags/purse"
+      },
+      {
+        "name": "Wallet",
+        "img": "/assets/images/products/bags/bag13.png",
+        "search_link": "/shops/bags/wallet"
+      }
+    ],
+    "grocery": [
+      {
+        "name": "Fruits & Vegetables",
+        "search_link": "/shops/grocery/fruits-and-vegetables",
+        "subcategories": [
+          {
+            "name": "Fruits",
+            "search_link": "/shops/grocery/fruits",
+            "items": [
+              { "name": "Apples", "img": "/assets/images/products/grocery/apple.png" },
+              { "name": "Bananas", "img": "/assets/images/products/grocery/bananas.png" },
+              { "name": "Blueberries", "img": "/assets/images/products/grocery/bluebarries.png" },
+              { "name": "Cherries", "img": "/assets/images/products/grocery/cherry.png" },
+              { "name": "Clementines", "img": "/assets/images/products/grocery/clementines.png" },
+              { "name": "Lime", "img": "/assets/images/products/grocery/lime.png" },
+              { "name": "Mangoes", "img": "/assets/images/products/grocery/mangoes.png" },
+              { "name": "Oranges", "img": "/assets/images/products/grocery/oranges.png" },
+              { "name": "Pears", "img": "/assets/images/products/grocery/pears.png" },
+              { "name": "Strawberries", "img": "/assets/images/products/grocery/strawberries.png" }
+            ]
+          },
+          {
+            "name": "Vegetables",
+            "search_link": "/shops/grocery/vegetables",
+            "items": [
+              { "name": "Baby Spinach", "img": "/assets/images/products/grocery/baby-spinach.png" },
+              { "name": "Broccoli", "img": "/assets/images/products/grocery/broccoli.png" },
+              { "name": "Carrots", "img": "/assets/images/products/grocery/carrots.png" },
+              { "name": "Cucumbers", "img": "/assets/images/products/grocery/cucumbers.png" },
+              { "name": "Green Beans", "img": "/assets/images/products/grocery/greenbeans.png" },
+              { "name": "Onions", "img": "/assets/images/products/grocery/onions.png" },
+              { "name": "Peppers", "img": "/assets/images/products/grocery/papper.png" },
+              { "name": "Potatoes", "img": "/assets/images/products/grocery/potatoes.png" },
+              { "name": "Spinach", "img": "/assets/images/products/grocery/spinach.png" },
+              { "name": "Sweet Corn", "img": "/assets/images/products/grocery/sweetcorn.png" },
+              { "name": "Tomatoes", "img": "/assets/images/products/grocery/tomatoes.png" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Dairy & Eggs",
+        "search_link": "/shops/grocery/dairy",
+        "subcategories": [
+          {
+            "name": "Milk",
+            "search_link": "/shops/grocery/milk",
+            "items": [
+              { "name": "Arla Milk", "img": "/assets/images/products/grocery/arlamilk.png" },
+              { "name": "Chocolate Milk", "img": "/assets/images/products/grocery/chocolatemilk.png" },
+              { "name": "Dairy Milk", "img": "/assets/images/products/grocery/dairymilk.png" },
+              { "name": "Fresh Milk", "img": "/assets/images/products/grocery/freshmilk.png" },
+              { "name": "Lactose Free Milk", "img": "/assets/images/products/grocery/lactofreemilk.png" },
+              { "name": "Lactoid Milk", "img": "/assets/images/products/grocery/lactoidmilk.png" }
+            ]
+          },
+          {
+            "name": "Eggs",
+            "search_link": "/shops/grocery/eggs",
+            "items": [
+              { "name": "Cavanagh Eggs", "img": "/assets/images/products/grocery/cavanaghegg.png" },
+              { "name": "Clarence Eggs", "img": "/assets/images/products/grocery/clarenceegg.png" },
+              { "name": "Golden Eggs", "img": "/assets/images/products/grocery/goldenegg.png" },
+              { "name": "Happy Eggs", "img": "/assets/images/products/grocery/happyegg.png" },
+              { "name": "Morrisons Eggs", "img": "/assets/images/products/grocery/morrisonsegg.png" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Meat & Fish",
+        "search_link": "/shops/grocery/meat-and-fish",
+        "subcategories": [
+          {
+            "name": "Meat",
+            "search_link": "/shops/grocery/meat",
+            "items": [
+              { "name": "Beef", "img": "/assets/images/products/grocery/beef.png" },
+              { "name": "Beef Steak", "img": "/assets/images/products/grocery/beefsteak.png" },
+              { "name": "Chicken Breast", "img": "/assets/images/products/grocery/chickenbreast.png" },
+              { "name": "Chicken Thighs", "img": "/assets/images/products/grocery/chickenthighs.png" },
+              { "name": "Turkey Breast", "img": "/assets/images/products/grocery/turkeybreast.png" }
+            ]
+          },
+          {
+            "name": "Fish",
+            "search_link": "/shops/grocery/fish",
+            "items": [
+              { "name": "Cod Fillet", "img": "/assets/images/products/grocery/codfillet.png" },
+              { "name": "Halibut Fillet", "img": "/assets/images/products/grocery/halibutfillet.png" },
+              { "name": "Salmon", "img": "/assets/images/products/grocery/salmon.png" },
+              { "name": "Shrimp", "img": "/assets/images/products/grocery/shrimp.png" },
+              { "name": "Swordfish Fillet", "img": "/assets/images/products/grocery/swordfishfillet.png" },
+              { "name": "Tilapia Fillet", "img": "/assets/images/products/grocery/tilapiafillet.png" }
+            ]
+          }
+        ]
+      }
+    ],
+    "makeup": [
+      {
+        "name": "Face",
+        "search_link": "/shops/makeup/face",
+        "subcategories": [
+          {
+            "name": "Foundation",
+            "img": "/assets/images/products/makeup/makeup1.png",
+            "search_link": "/shops/makeup/foundation"
+          },
+          {
+            "name": "Face Powder",
+            "img": "/assets/images/products/makeup/makeup5.png",
+            "search_link": "/shops/makeup/face-powder"
+          },
+          {
+            "name": "Blusher",
+            "img": "/assets/images/products/makeup/makeup10.png",
+            "search_link": "/shops/makeup/blusher"
+          }
+        ]
+      },
+      {
+        "name": "Eyes",
+        "search_link": "/shops/makeup/eyes",
+        "subcategories": [
+          {
+            "name": "Eye Shadow",
+            "img": "/assets/images/products/makeup/makeup15.png",
+            "search_link": "/shops/makeup/eye-shadow"
+          },
+          {
+            "name": "Mascara",
+            "img": "/assets/images/products/makeup/makeup20.png",
+            "search_link": "/shops/makeup/mascara"
+          },
+          {
+            "name": "Glitter",
+            "img": "/assets/images/products/makeup/makeup25.png",
+            "search_link": "/shops/makeup/glitter"
+          }
+        ]
+      },
+      {
+        "name": "Lips",
+        "search_link": "/shops/makeup/lips",
+        "subcategories": [
+          {
+            "name": "Lipstick",
+            "img": "/assets/images/products/makeup/makeup30.png",
+            "search_link": "/shops/makeup/lipstick"
+          },
+          {
+            "name": "Lip Gloss",
+            "img": "/assets/images/products/makeup/makeup35.png",
+            "search_link": "/shops/makeup/lip-gloss"
+          },
+          {
+            "name": "Lip Kit",
+            "img": "/assets/images/products/makeup/makeup40.png",
+            "search_link": "/shops/makeup/lip-kit"
+          }
+        ]
+      }
+    ],
+    "bakery": [
+      {
+        "name": "Juice",
+        "img": "/assets/images/products/bakery/juice.png",
+        "search_link": "/shops/bakery/juice"
+      },
+      {
+        "name": "Coffee",
+        "img": "/assets/images/products/bakery/coffee.png",
+        "search_link": "/shops/bakery/coffee"
+      },
+      {
+        "name": "Danish",
+        "img": "/assets/images/products/bakery/danish.png",
+        "search_link": "/shops/bakery/danish"
+      },
+      {
+        "name": "Cookies",
+        "img": "/assets/images/products/bakery/cookies.png",
+        "search_link": "/shops/bakery/cookies"
+      },
+      {
+        "name": "Pita Bread",
+        "img": "/assets/images/products/bakery/pitabread.png",
+        "search_link": "/shops/bakery/pita-bread"
+      },
+      {
+        "name": "Rounded Cake",
+        "img": "/assets/images/products/bakery/roundedCake.png",
+        "search_link": "/shops/bakery/rounded-cake"
+      },
+      {
+        "name": "Sliced Cake",
+        "img": "/assets/images/products/bakery/slicedcake.png",
+        "search_link": "/shops/bakery/sliced-cake"
+      },
+      {
+        "name": "Toast",
+        "img": "/assets/images/products/bakery/toast.png",
+        "search_link": "/shops/bakery/toast"
+      },
+      {
+        "name": "Soft Bread",
+        "img": "/assets/images/products/bakery/softbread.png",
+        "search_link": "/shops/bakery/soft-bread"
+      }
+    ]
+  }
+}
