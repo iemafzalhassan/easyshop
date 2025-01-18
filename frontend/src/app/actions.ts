@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export async function authenticated() {
   const cookieStore = cookies();
@@ -15,7 +16,8 @@ export async function deleteCookies(name: string) {
 
 export async function login(credentials: { email: string; password: string }) {
   try {
-    const response = await fetch("/api/v1/auth/login", {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    const response = await fetch(`${apiUrl}/v1/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,59 +26,50 @@ export async function login(credentials: { email: string; password: string }) {
     });
 
     if (!response.ok) {
-      throw new Error("Login failed");
+      const error = await response.json();
+      throw new Error(error.message || 'Login failed');
     }
 
     const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Login error:", error);
-    throw error;
-  }
-}
-
-export async function register(userData: {
-  name: string;
-  email: string;
-  password: string;
-}) {
-  try {
-    const response = await fetch("/api/v1/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
+    const cookieStore = cookies();
+    
+    cookieStore.set('token', data.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
     });
-
-    if (!response.ok) {
-      throw new Error("Registration failed");
-    }
-
-    const data = await response.json();
+    
     return data;
-  } catch (error) {
-    console.error("Registration error:", error);
+  } catch (error: any) {
+    console.error("Login error:", error);
     throw error;
   }
 }
 
 export async function getProfile() {
   try {
-    const response = await fetch("/api/v1/auth/profile", {
+    const cookieStore = cookies();
+    const token = cookieStore.get("token");
+    
+    if (!token) {
+      return null;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    const response = await fetch(`${apiUrl}/v1/auth/profile`, {
       headers: {
-        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token.value}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch profile");
+      throw new Error('Failed to get profile');
     }
 
-    const data = await response.json();
-    return data;
+    return response.json();
   } catch (error) {
-    console.error("Profile fetch error:", error);
-    throw error;
+    console.error("Get profile error:", error);
+    return null;
   }
 }

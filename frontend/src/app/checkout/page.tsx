@@ -40,19 +40,24 @@ const btns = [
 ];
 
 const CheckoutPage = () => {
-  const [activeForm, setActiveForm] = useState("billing");
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [activeForm, setActiveForm] = useState("billing");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      // Redirect to login if not authenticated using Next.js router
-      router.push("/auth/login?redirect=/checkout");
-    }
-  }, [isAuthenticated, router]);
+    setMounted(true);
+  }, []);
 
-  if (!isAuthenticated) {
-    return null; // Don't render anything while redirecting
+  useEffect(() => {
+    if (mounted && !isAuthenticated) {
+      const currentPath = '/checkout';
+      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+    }
+  }, [mounted, isAuthenticated, router]);
+
+  if (!mounted || !isAuthenticated) {
+    return null;
   }
 
   return (

@@ -21,6 +21,14 @@ const orderRoutes = require('./api/v1/routes/order.routes');
 
 const app = express();
 
+// Enable CORS with credentials
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Security HTTP headers
 app.use(helmet());
 
@@ -52,15 +60,15 @@ app.use(xss());
 app.use(hpp({
   whitelist: [
     'price',
-    'ratingsAverage',
-    'ratingsQuantity',
-    'maxGroupSize',
-    'difficulty'
+    'rating',
+    'category',
+    'brand',
+    'limit',
+    'page',
+    'sort',
+    'fields'
   ]
 }));
-
-// Enable CORS
-app.use(cors(corsOptions));
 
 // Compression
 app.use(compression());

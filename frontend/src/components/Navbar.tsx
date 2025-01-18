@@ -1,24 +1,21 @@
 "use client";
 
-import { authenticated, deleteCookies } from "@/app/actions";
-import { setAuthenticated } from "@/lib/features/auth/authSlice";
+import { setCurrentUser } from "@/lib/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { authService } from "@/services/auth.service";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HiMenuAlt2 } from "react-icons/hi";
 import { IoChevronDownOutline } from "react-icons/io5";
 import MobileMenu from "./MobileMenu";
-import Modal from "./Modal";
 import { ProfileMenu } from "./ProfileMenu";
 import SearchBar from "./SearchBar";
 import { ToggleTheme } from "./ToggleTheme";
-import LoginForm from "./forms/LoginForm";
-import SignupForm from "./forms/SignupForm";
 import { Button } from "./ui/button";
 import dynamic from "next/dynamic";
 
-const Logo = dynamic(() => import("./ui/Logo"), {
+const Logo = dynamic(() => import("@/assets/Logo"), {
   ssr: false,
   loading: () => (
     <div className="w-[40px] h-[40px] bg-secondary animate-pulse rounded-lg" />
@@ -51,161 +48,124 @@ const links = [
         url: "/contact",
       },
       {
-        title: "Checkout",
-        url: "/checkout",
-      },
-      {
-        title: "Orders",
-        url: "/profile/orders",
+        title: "About Us",
+        url: "/about",
       },
     ],
   },
 ];
 
 const Navbar = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isConfirm, setIsConfirm] = useState(false);
-  const [isRegisterTab, setIsRegisterTab] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
+  
+  const { currentUser } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    const authentication = async () => {
+    const checkAuth = async () => {
       try {
-        const res = await authenticated();
-        dispatch(setAuthenticated(res));
+        const isAuthenticated = await authService.checkAuth();
+        if (isAuthenticated) {
+          const user = await authService.getProfile();
+          if (user) {
+            dispatch(setCurrentUser(user));
+          }
+        }
       } catch (error) {
-        console.error("Authentication error:", error);
-        dispatch(setAuthenticated(false));
-      } finally {
-        setIsLoading(false);
+        console.error('Auth check error:', error);
       }
     };
-
-    authentication();
+    checkAuth();
   }, [dispatch]);
 
   const handleLogout = async () => {
     try {
-      await deleteCookies("token");
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-      }
-      setIsConfirm(false);
-      dispatch(setAuthenticated(false));
-      router.push("/");
+      await authService.logout();
+      dispatch(setCurrentUser(null));
+      router.push('/');
+      router.refresh();
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
     }
   };
 
   return (
-    <>
-      <div className="navbar px-default py-3 bg-secondary shadow-lg border-b sticky top-0 left-0 z-50">
-        <nav className="flex gap-6 items-center justify-between">
-          <div className="left flex gap-6 items-center flex-1">
-            <Link href="/" className="block">
-              <Logo />
-            </Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center">
+        <button
+          className="mr-2 block lg:hidden"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <HiMenuAlt2 className="h-6 w-6" />
+        </button>
+        <Link href="/" className="mr-6 flex items-center space-x-2">
+          <Logo />
+        </Link>
 
-            <div className="search flex-1 max-w-sm hidden md:block">
-              <SearchBar />
-            </div>
-          </div>
-
-          <div className="right flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-6">
-              {links.map((link) =>
-                link.subLinks ? (
-                  <div
-                    key={link.title}
-                    className="relative group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>{link.title}</span>
-                      <IoChevronDownOutline className="text-lg" />
-                    </div>
-
-                    <div className="absolute top-full pt-2 left-0 hidden group-hover:block">
-                      <div className="bg-secondary p-2 rounded-lg shadow-lg min-w-[150px]">
-                        {link.subLinks.map((subLink) => (
-                          <Link
-                            key={subLink.title}
-                            href={subLink.url}
-                            className="block px-3 py-1.5 rounded-md hover:bg-accent"
-                          >
-                            {subLink.title}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
+        <div className="hidden lg:flex lg:gap-x-12">
+          {links.map((link, index) =>
+            link.subLinks ? (
+              <div key={index} className="relative group">
+                <button className="inline-flex items-center text-sm font-medium text-muted-foreground">
+                  {link.title}
+                  <IoChevronDownOutline className="ml-1 h-3 w-3" />
+                </button>
+                <div className="absolute left-0 top-full hidden pt-2 group-hover:block">
+                  <div className="w-48 rounded-lg bg-white p-2 shadow-lg ring-1 ring-black ring-opacity-5">
+                    {link.subLinks.map((subLink, subIndex) => (
+                      <Link
+                        key={subIndex}
+                        href={subLink.url}
+                        className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        {subLink.title}
+                      </Link>
+                    ))}
                   </div>
-                ) : (
-                  <Link key={link.title} href={link.url}>
-                    {link.title}
-                  </Link>
-                )
-              )}
-            </div>
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={index}
+                href={link.url}
+                className="text-sm font-medium text-muted-foreground"
+              >
+                {link.title}
+              </Link>
+            )
+          )}
+        </div>
 
-            <div className="flex items-center gap-3">
-              <ToggleTheme />
-
-              {!isLoading && (
-                <>
-                  {isAuthenticated ? (
-                    <ProfileMenu
-                      isConfirm={isConfirm}
-                      setIsConfirm={setIsConfirm}
-                      handleLogout={handleLogout}
-                    />
-                  ) : (
-                    <Button
-                      onClick={() => setIsOpen(true)}
-                      className="hidden md:block"
-                    >
-                      Login
-                    </Button>
-                  )}
-                </>
-              )}
-
+        <div className="ml-auto flex items-center gap-x-4">
+          <SearchBar />
+          <ToggleTheme />
+          {currentUser ? (
+            <ProfileMenu user={currentUser} onLogout={handleLogout} />
+          ) : (
+            <>
               <Button
                 variant="ghost"
-                className="md:hidden"
-                onClick={() => setIsMobileOpen(true)}
+                asChild
               >
-                <HiMenuAlt2 className="text-2xl" />
+                <Link href="/login">Login</Link>
               </Button>
-            </div>
-          </div>
-        </nav>
+              <Button
+                asChild
+              >
+                <Link href="/register">Sign up</Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <MobileMenu
-        isOpen={isMobileOpen}
-        setIsOpen={setIsMobileOpen}
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
         links={links}
-        isAuthenticated={isAuthenticated}
-        setIsLoginOpen={setIsOpen}
       />
-
-      <Modal
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-        title={isRegisterTab ? "Create Account" : "Login"}
-      >
-        {isRegisterTab ? (
-          <SignupForm setIsRegisterTab={setIsRegisterTab} setIsOpen={setIsOpen} />
-        ) : (
-          <LoginForm setIsRegisterTab={setIsRegisterTab} setIsOpen={setIsOpen} />
-        )}
-      </Modal>
-    </>
+    </header>
   );
 };
 

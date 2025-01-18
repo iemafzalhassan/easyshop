@@ -22,6 +22,16 @@ const gadgets = [
     img: "/assets/images/categories/headphone.png",
     link: "/shops/gadgets/headphones",
   },
+  {
+    title: "TV",
+    img: "/assets/images/categories/tv.jpg",
+    link: "/shops/gadgets/TVs",
+  },
+  {
+    title: "Laptops",
+    img: "/assets/images/products/gadgets/macbookair2019.png",
+    link: "/shops/gadgets/laptops",
+  },
 ];
 
 const clothing = [
@@ -36,14 +46,29 @@ const clothing = [
     link: "/shops/clothing/tops",
   },
   {
-    title: "Floral",
-    img: "/assets/images/categories/floral.png",
-    link: "/shops/clothing/floral",
+    title: "Dresses",
+    img: "/assets/images/products/clothing/dress1.png",
+    link: "/shops/clothing/dresses",
   },
   {
-    title: "Jeans",
-    img: "/assets/images/categories/jeans.png",
-    link: "/shops/clothing/jeans",
+    title: "Blazers",
+    img: "/assets/images/products/clothing/blazer1.png",
+    link: "/shops/clothing/blazers",
+  },
+  {
+    title: "Coats",
+    img: "/assets/images/products/clothing/coat1.png",
+    link: "/shops/clothing/coats",
+  },
+  {
+    title: "Pants",
+    img: "/assets/images/products/clothing/pant1.png",
+    link: "/shops/clothing/pants",
+  },
+  {
+    title: "Skirts",
+    img: "/assets/images/products/clothing/skirt1.png",
+    link: "/shops/clothing/skirts",
   },
 ];
 
@@ -67,6 +92,16 @@ const beauty = [
     title: "Facewashes",
     img: "/assets/images/categories/facewashes.jpg",
     link: "/shops/makeup/facial-care",
+  },
+  {
+    title: "beautycare",
+    img: "/assets/images/categories/beautycare.png",
+    link: "/shops/makeup/beautycare",
+  },
+  {
+    title: "Lipsticks",
+    img: "/assets/images/products/makeup/makeup9.png",
+    link: "/shops/makeup/lipstick",
   },
 ];
 

@@ -161,3 +161,42 @@ exports.deleteTrackingUpdate = catchAsync(async (req, res) => {
         data: null
     });
 });
+
+exports.confirmDelivery = catchAsync(async (req, res) => {
+    const order = await Order.findById(req.params.orderId)
+        .populate('trackingUpdates');
+
+    if (!order) {
+        throw new AppError('Order not found', 404);
+    }
+
+    // Only allow the order owner to confirm delivery
+    if (order.user.toString() !== req.user._id.toString()) {
+        throw new AppError('Not authorized to confirm delivery for this order', 403);
+    }
+
+    // Check if order is in shipped status
+    if (order.status !== 'shipped') {
+        throw new AppError('Can only confirm delivery for shipped orders', 400);
+    }
+
+    // Update order status to delivered
+    order.status = 'delivered';
+    
+    // Add a tracking update for delivery confirmation
+    const trackingUpdate = await TrackingUpdate.create({
+        order: order._id,
+        status: 'delivered',
+        location: 'Delivery Address',
+        description: 'Package delivered and confirmed by customer',
+        updatedBy: req.user._id
+    });
+
+    order.trackingUpdates.push(trackingUpdate._id);
+    await order.save();
+
+    res.status(200).json({
+        status: 'success',
+        data: { order }
+    });
+});

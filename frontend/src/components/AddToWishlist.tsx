@@ -1,10 +1,11 @@
 "use client";
 
-import { toggleToWishlists } from "@/lib/features/cart/cartSlice";
+import { toggleWishlist } from "@/lib/features/cart/cartSlice";
 import { useAppSelector } from "@/lib/hooks";
 import { AnimatePresence, Variants, motion } from "framer-motion";
 import { IoIosHeartEmpty, IoMdHeart } from "react-icons/io";
 import { useDispatch } from "react-redux";
+import { Product } from "@/types/product";
 
 const ContainerVariants: Variants = {
   hidden: {
@@ -42,7 +43,7 @@ const item: Variants = {
 };
 
 type AddToWishlistProps = {
-  product: AllProduct;
+  product: Product;
 };
 
 const AddToWishlist = ({ product }: AddToWishlistProps) => {
@@ -50,31 +51,31 @@ const AddToWishlist = ({ product }: AddToWishlistProps) => {
   const dispatch = useDispatch();
 
   const isProductInWishlist = wishlists.some(
-    (wishlist) => wishlist._id === product._id
+    (wishlist) => wishlist.id === product.id
   );
+
+  const handleToggleWishlist = () => {
+    dispatch(toggleWishlist(product));
+  };
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <motion.button
         variants={ContainerVariants}
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="text-2xl rounded-full min-h-10 min-w-10 p-0 border cursor-pointer bg-accent border-primary flex justify-center items-center"
-        onClick={() => dispatch(toggleToWishlists(product))}
+        onClick={handleToggleWishlist}
+        className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
       >
-        {isProductInWishlist && (
-          <motion.div className="text-primary" variants={item}>
-            <IoMdHeart />
-          </motion.div>
-        )}
-
-        {!isProductInWishlist && (
-          <motion.div variants={item}>
-            <IoIosHeartEmpty />
-          </motion.div>
-        )}
-      </motion.div>
+        <motion.div variants={item}>
+          {isProductInWishlist ? (
+            <IoMdHeart className="text-2xl text-red-500" />
+          ) : (
+            <IoIosHeartEmpty className="text-2xl text-gray-600 dark:text-gray-300" />
+          )}
+        </motion.div>
+      </motion.button>
     </AnimatePresence>
   );
 };

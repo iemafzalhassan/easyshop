@@ -9,28 +9,110 @@ export interface RegisterData extends LoginCredentials {
   name: string;
 }
 
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+// Add /api/v1 prefix to all endpoints
+export const AUTH_ENDPOINTS = {
+  LOGIN: '/api/v1/auth/login',
+  REGISTER: '/api/v1/auth/register',
+  PROFILE: '/api/v1/auth/profile',
+  CHECK: '/api/v1/auth/check',
+} as const;
+
+const setToken = (token: string) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('token', token);
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  }
+};
+
+const removeToken = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+    delete api.defaults.headers.common['Authorization'];
+  }
+};
+
 export const authService = {
   async login(credentials: LoginCredentials) {
-    const response = await api.post('/auth/login', credentials);
-    return response.data;
+    try {
+      const response = await api.post(AUTH_ENDPOINTS.LOGIN, credentials);
+      const { token, user } = response.data.data;
+      
+      if (token) {
+        setToken(token);
+      }
+      
+      return { user, token };
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
   },
 
   async register(data: RegisterData) {
-    const response = await api.post('/auth/register', data);
-    return response.data;
+    try {
+      const response = await api.post(AUTH_ENDPOINTS.REGISTER, data);
+      const { token, user } = response.data.data;
+      
+      if (token) {
+        setToken(token);
+      }
+      
+      return { user, token };
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      throw new Error(error.response?.data?.message || 'Registration failed');
+    }
   },
 
   async logout() {
-    localStorage.removeItem('token');
+    try {
+      removeToken();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   },
 
-  async getProfile() {
-    const response = await api.get('/auth/profile');
-    return response.data;
+  async getProfile(): Promise<User | null> {
+    try {
+      const response = await api.get(AUTH_ENDPOINTS.PROFILE);
+      return response.data.data.user;
+    } catch (error: any) {
+      console.error('Get profile error:', error);
+      if (error.response?.status === 401) {
+        await this.logout();
+      }
+      return null;
+    }
   },
 
-  async updateProfile(data: Partial<RegisterData>) {
-    const response = await api.put('/auth/profile', data);
-    return response.data;
-  },
+  async checkAuth(): Promise<boolean> {
+    try {
+      const token = typeof window !== 'undefined' 
+        ? localStorage.getItem('token')
+        : null;
+        
+      if (!token) {
+        return false;
+      }
+
+      // Set token in headers
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      const response = await api.get(AUTH_ENDPOINTS.CHECK);
+      return response.data.status === 'success';
+    } catch (error: any) {
+      console.error('Auth check error:', error);
+      if (error.response?.status === 401) {
+        await this.logout();
+      }
+      return false;
+    }
+  }
 };

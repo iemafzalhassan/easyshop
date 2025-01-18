@@ -3,10 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { usePathname, useRouter } from "next/navigation";
-import { Dispatch, SetStateAction } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
-import { LuLoader } from "react-icons/lu";
+import { LuLoader2 } from "react-icons/lu";
 import { Button } from "../ui/button";
 import {
   Form,
@@ -19,25 +19,25 @@ import {
 import { Input } from "../ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAppDispatch } from "@/lib/hooks";
-import { setAuthenticated } from "@/lib/features/auth/authSlice";
-import { api } from "@/services/api";
+import { setCurrentUser } from "@/lib/features/auth/authSlice";
+import { authService } from "@/services/auth.service";
+import Link from "next/link";
 
 const formSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
-interface SignupFormProps {
-  setIsOpen?: Dispatch<SetStateAction<boolean>>;
-}
-
-const SignupForm = ({ setIsOpen }: SignupFormProps) => {
+export const SignupForm = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
   const { toast } = useToast();
   const dispatch = useAppDispatch();
-  const { loading, error } = api.useGetAuthQuery();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,126 +45,145 @@ const SignupForm = ({ setIsOpen }: SignupFormProps) => {
       name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await dispatch(setAuthenticated(values));
-      const token = localStorage.getItem('token');
-      if (token) {
-        await api.createCookies(token);
-        toast({
-          title: "Success",
-          description: "You have successfully registered",
-          variant: "success",
-        });
-        if (pathname === "/auth/register") {
-          router.push("/");
-        }
-        setIsOpen?.(false);
-      }
+      setIsLoading(true);
+      const { user } = await authService.register(values);
+      dispatch(setCurrentUser(user));
+      
+      toast({
+        title: "Success",
+        description: "Account created successfully",
+      });
+
+      router.push("/");
+      router.refresh();
     } catch (error: any) {
       toast({
-        title: "Registration failed",
-        description: error?.message || "Something went wrong",
+        title: "Error",
+        description: error.message || "Failed to create account",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 w-full sm:w-[400px]"
+    <div className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter your name"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Enter your password"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Confirm your password"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="w-full h-11 text-base"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <LuLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              "Create account"
+            )}
+          </Button>
+        </form>
+      </Form>
+
+      <Button
+        variant="outline"
+        type="button"
+        disabled={isLoading}
+        className="w-full h-11 text-base"
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  placeholder="John Doe"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="example@gmail.com"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Enter your password"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full mt-3 h-12 gap-3"
-        >
-          <span>Register</span>
-          {loading && (
-            <span className="text-base animate-spin">
-              <LuLoader />
-            </span>
-          )}
-        </Button>
+        <FcGoogle className="mr-2 h-5 w-5" />
+        Google
+      </Button>
 
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full gap-2"
+      <p className="text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link
+          href="/login"
+          className="font-medium text-primary hover:underline"
         >
-          <FcGoogle />
-          <span>Google</span>
-        </Button>
-      </form>
-    </Form>
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 };
-
-export default SignupForm;

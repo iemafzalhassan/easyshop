@@ -6,9 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { User } from "@/services/auth.service";
 import Image from "next/image";
 import Link from "next/link";
-import { Dispatch, SetStateAction } from "react";
 import { BsCartCheckFill } from "react-icons/bs";
 import { CgProfile } from "react-icons/cg";
 import { FaHeart } from "react-icons/fa";
@@ -37,46 +37,47 @@ const profileLinks = [
   },
 ];
 
-type ProfileMenuProps = {
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-};
+interface ProfileMenuProps {
+  user: User;
+  onLogout: () => void;
+}
 
-export function ProfileMenu({ setIsOpen }: ProfileMenuProps) {
+export function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Image
-          src={"/icons/avatar.png"}
-          width={35}
-          height={35}
-          alt="profile"
-          className="rounded-full cursor-pointer"
-        />
+        <button className="flex items-center gap-2 outline-none">
+          <div className="relative w-8 h-8 overflow-hidden rounded-full">
+            <Image
+              src={user.avatar || "/assets/icons/Avatar.png"}
+              alt={user.name}
+              width={32}
+              height={32}
+              className="object-cover w-full h-full"
+              priority
+            />
+          </div>
+          <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end">
-        <ul>
-          {profileLinks.map((link) => (
-            <li key={link.title}>
-              <Link href={link.url}>
-                <DropdownMenuItem className="flex gap-3 items-center cursor-pointer w-full py-2 px-4">
-                  <span className="text-xl">{link.icon}</span>
-                  <span>{link.title}</span>
-                </DropdownMenuItem>
-              </Link>
-            </li>
-          ))}
-          <li>
-            <DropdownMenuItem
-              className="flex gap-3 items-center cursor-pointer w-full py-2 px-4"
-              onClick={() => setIsOpen(true)}
-            >
-              <span className="text-xl">
-                <IoLogOut />
-              </span>
-              <span>Logout</span>
+
+      <DropdownMenuContent align="end" className="w-56">
+        {profileLinks.map((link) => (
+          <Link key={link.title} href={link.url}>
+            <DropdownMenuItem className="cursor-pointer">
+              <span className="mr-2">{link.icon}</span>
+              {link.title}
             </DropdownMenuItem>
-          </li>
-        </ul>
+          </Link>
+        ))}
+
+        <DropdownMenuItem
+          className="cursor-pointer text-destructive focus:text-destructive"
+          onClick={onLogout}
+        >
+          <IoLogOut className="mr-2" />
+          Logout
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

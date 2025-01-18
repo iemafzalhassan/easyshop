@@ -47,9 +47,11 @@ const ShopsPage = () => {
                     fill
                     className="object-contain"
                     sizes="80px"
+                    priority
+                    onError={(event: React.SyntheticEvent<HTMLImageElement, Event>) => (event.currentTarget.style.display = 'none')}
                   />
                 </div>
-                <h2 className="mt-4 capitalize font-medium">{category.title}</h2>
+                <span className="capitalize mt-2 block">{category.title}</span>
               </Link>
             </motion.div>
           ))}

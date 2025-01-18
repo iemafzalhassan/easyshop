@@ -5,7 +5,7 @@ import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
 import { IoMdSend } from "react-icons/io";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import Logo from "./ui/Logo";
+import Logo from "@/assets/Logo";
 
 const Footer = () => {
   return (

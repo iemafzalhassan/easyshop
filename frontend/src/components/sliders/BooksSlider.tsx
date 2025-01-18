@@ -10,11 +10,26 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
-type BookSliderProps = {
-  books: BooksProduct[] | [];
+type BooksProduct = {
+  _id: string;
+  title: string;
+  image: string[];
+  // add other properties as needed
 };
 
-const BooksSlider = ({ books }: BookSliderProps) => {
+type BookSliderProps = {
+  books: BooksProduct[];
+  loading?: boolean;
+};
+
+const BooksSlider = ({ books, loading }: BookSliderProps) => {
+  const getImageUrl = (book: BooksProduct) => {
+    if (!book.image || !Array.isArray(book.image) || book.image.length === 0) {
+      return '/assets/images/products/books/book1.png'; // Using an existing book image as fallback
+    }
+    return book.image[0];
+  };
+
   return (
     <Carousel
       plugins={
@@ -29,14 +44,14 @@ const BooksSlider = ({ books }: BookSliderProps) => {
         {books?.map((book, index) => (
           <CarouselItem
             className="basis-1/2 sm:basis-1/3 md:basis-1/5 lg:basis-1/6"
-            key={index}
+            key={book._id || index}
           >
             <Link href={`/products/${book._id}`}>
               <Image
                 width={400}
                 height={600}
-                alt={book.title}
-                src={book.image[0]}
+                alt={book.title || 'Book cover'}
+                src={getImageUrl(book)}
                 className="rounded-lg"
               />
             </Link>

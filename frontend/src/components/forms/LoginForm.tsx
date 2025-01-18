@@ -3,10 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { usePathname, useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
-import { LuLoader } from "react-icons/lu";
+import { LuLoader2 } from "react-icons/lu";
 import { Button } from "../ui/button";
 import {
   Form,
@@ -19,22 +19,20 @@ import {
 import { Input } from "../ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAppDispatch } from "@/lib/hooks";
-import { setAuthenticated } from "@/lib/features/auth/authSlice";
-import { api } from "@/services/api";
+import { setCurrentUser } from "@/lib/features/auth/authSlice";
+import { authService } from "@/services/auth.service";
+import Link from "next/link";
 
 const formSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-interface LoginFormProps {
-  setIsOpen?: Dispatch<SetStateAction<boolean>>;
-}
-
-const LoginForm = ({ setIsOpen }: LoginFormProps) => {
+export const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/';
   const { toast } = useToast();
   const dispatch = useAppDispatch();
 
@@ -46,86 +44,96 @@ const LoginForm = ({ setIsOpen }: LoginFormProps) => {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
-      const response = await api.post("/auth/login", values);
-      const { token } = response.data;
+      const { user } = await authService.login(values);
+      dispatch(setCurrentUser(user));
       
-      if (token) {
-        localStorage.setItem("token", token);
-        dispatch(setAuthenticated(true));
-        setIsOpen?.(false);
-        toast({
-          title: "Success",
-          description: "You have successfully logged in",
-        });
-        if (pathname === "/login") {
-          router.push("/");
-          router.refresh();
-        }
-      }
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
+
+      router.push(redirect);
+      router.refresh();
     } catch (error: any) {
       toast({
-        variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Something went wrong",
+        description: error.message || "Failed to login",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="example@mail.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="********" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button disabled={isLoading} className="w-full" type="submit">
-          {isLoading ? (
-            <span className="flex items-center gap-2">
-              <LuLoader className="animate-spin" /> Please wait...
-            </span>
-          ) : (
-            "Login"
-          )}
-        </Button>
-      </form>
-      <div className="flex items-center gap-4 my-4">
-        <div className="h-0.5 bg-muted flex-1"></div>
-        <span className="text-sm text-muted-foreground">OR</span>
-        <div className="h-0.5 bg-muted flex-1"></div>
-      </div>
-      <Button variant="outline" className="w-full" type="button">
-        <FcGoogle className="mr-2 text-lg" />
-        Continue with Google
+    <div className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Enter your password"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="w-full h-11 text-base"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <LuLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign in"
+            )}
+          </Button>
+        </form>
+      </Form>
+
+      <Button
+        variant="outline"
+        type="button"
+        disabled={isLoading}
+        className="w-full h-11 text-base"
+      >
+        <FcGoogle className="mr-2 h-5 w-5" />
+        Google
       </Button>
-    </Form>
+    </div>
   );
 };
-
-export default LoginForm;

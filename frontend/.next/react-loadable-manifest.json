@@ -1,6 +1,6 @@
 {
-  "../components/Navbar.tsx -> ./ui/Logo": {
-    "id": "../components/Navbar.tsx -> ./ui/Logo",
+  "../components/Navbar.tsx -> @/assets/Logo": {
+    "id": "../components/Navbar.tsx -> @/assets/Logo",
     "files": []
   }
 }

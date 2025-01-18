@@ -10,7 +10,26 @@
   ],
   "rootMainFiles": [
     "static/chunks/webpack.js",
-    "static/chunks/main-app.js"
+    "static/chunks/main-app-node_modules_next_dist_b.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_ac.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_a.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_i.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_react-dev-overlay_hot-reloader-client_js-bd9b24bf.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_react-dev-overlay_internal_R.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_react-dev-overlay_internal_components_O.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_react-dev-overlay_internal_container_B.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_react-dev-overlay_internal_e.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_rea.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_re.js",
+    "static/chunks/main-app-node_modules_next_dist_client_components_r.js",
+    "static/chunks/main-app-node_modules_next_dist_client_d.js",
+    "static/chunks/main-app-node_modules_next_dist_compiled_anser_index_js-9a21be1d.js",
+    "static/chunks/main-app-node_modules_next_dist_compiled_c.js",
+    "static/chunks/main-app-node_modules_next_dist_compiled_react-dom_cjs_react-dom_development_js-2d61d070.js",
+    "static/chunks/main-app-node_modules_next_dist_compiled_react-d.js",
+    "static/chunks/main-app-node_modules_next_dist_compiled_react_c.js",
+    "static/chunks/main-app-node_modules_next_dist_compiled_sc.js",
+    "static/chunks/main-app-node_modules_n.js"
   ],
   "pages": {
     "/_app": []

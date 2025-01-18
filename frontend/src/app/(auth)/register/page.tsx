@@ -1,5 +1,5 @@
 import Logo from "@/assets/Logo";
-import SignupForm from "@/components/forms/SignupForm";
+import { SignupForm } from "@/components/forms/SignupForm";
 import Link from "next/link";
 
 const RegisterPage = () => {

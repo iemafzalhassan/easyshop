@@ -7,8 +7,7 @@ import {
     useStripe,
     useElements
 } from '@stripe/react-stripe-js';
-import { useCart } from '../hooks/useCart';
-import { useAuth } from '../hooks/useAuth';
+import { useAppSelector } from '../lib/hooks';
 import { useToast } from '../hooks/useToast';
 import { CheckoutForm } from '../components/checkout/CheckoutForm';
 import { OrderSummary } from '../components/checkout/OrderSummary';
@@ -22,8 +21,8 @@ const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY!);
 
 const CheckoutPage: React.FC = () => {
     const navigate = useNavigate();
-    const { cart, clearCart } = useCart();
-    const { user } = useAuth();
+    const cart = useAppSelector((state) => state.cart);
+    const user = useAppSelector((state) => state.auth.user);
     const { showToast } = useToast();
     const [activeStep, setActiveStep] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -74,7 +73,7 @@ const CheckoutPage: React.FC = () => {
             });
 
             // Clear cart and show success message
-            clearCart();
+            // clearCart();
             showToast('Order placed successfully!', 'success');
             navigate(`/order/${data.data.order._id}`);
         } catch (error: any) {

@@ -9,9 +9,12 @@ class AuthService {
     return bcrypt.hash(password, salt);
   }
 
-  static generateToken(userId) {
+  static generateToken(userId, tokenVersion) {
     return jwt.sign(
-      { userId },
+      { 
+        userId,
+        version: tokenVersion 
+      },
       process.env.JWT_SECRET,
       { 
         expiresIn: '7d', // Token expires in 7 days
@@ -42,14 +45,38 @@ class AuthService {
 
   static async validatePassword(user, password) {
     if (!user || !password) {
-      throw new AppError('Invalid credentials');
+      throw new AppError('Invalid credentials', 401);
     }
     
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      throw new AppError('Invalid credentials');
+      throw new AppError('Invalid credentials', 401);
     }
+
     return true;
+  }
+
+  static async verifyCredentials(email, password) {
+    try {
+      // Find user by email
+      const user = await this.findUserByEmail(email);
+      if (!user) {
+        throw new AppError('Invalid credentials', 401);
+      }
+
+      // Validate password
+      await this.validatePassword(user, password);
+
+      // Remove password from response
+      user.password = undefined;
+
+      // Generate token with version
+      const token = this.generateToken(user._id, user.tokenVersion);
+
+      return { user, token };
+    } catch (error) {
+      throw error;
+    }
   }
 
   static async updateUser(userId, updates) {
@@ -78,21 +105,42 @@ class AuthService {
     }
 
     // Validate current password
-    await this.validatePassword(user, currentPassword);
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new AppError('Current password is incorrect', 401);
+    }
 
-    // Update password
+    // Hash new password
     user.password = await this.hashPassword(newPassword);
-    user.tokenVersion += 1; // Invalidate all existing tokens
+    
+    // Increment token version to invalidate existing tokens
+    user.tokenVersion += 1;
+    
     await user.save();
 
-    return this.generateToken(user._id);
+    // Generate new token
+    const token = this.generateToken(user._id, user.tokenVersion);
+
+    user.password = undefined;
+    return { user, token };
+  }
+
+  static async invalidateTokens(userId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    // Increment token version to invalidate all existing tokens
+    user.tokenVersion += 1;
+    await user.save();
   }
 
   static async login(email, password) {
     const user = await this.findUserByEmail(email);
     await this.validatePassword(user, password);
     
-    const token = this.generateToken(user._id);
+    const token = this.generateToken(user._id, user.tokenVersion);
     user.password = undefined;
     
     return { user, token };
@@ -111,7 +159,7 @@ class AuthService {
     if (!user) {
       throw new AppError('User not found', 404);
     }
-    return this.generateToken(user._id);
+    return this.generateToken(user._id, user.tokenVersion);
   }
 }
 

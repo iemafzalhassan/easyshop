@@ -1,67 +1,123 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import AddToCartBtnWrapper from "../AddToCartWrapper";
 import { discountPercent } from "../../lib/utils";
+import { Product } from "@/types/product";
+import { useState } from "react";
+
+// Default images for each category
+const DEFAULT_IMAGES: Record<string, string> = {
+  bakery: "/assets/images/products/bakery/bakery1.png",
+  books: "/assets/images/products/books/book1.png",
+  clothing: "/assets/images/products/clothing/clothing1.png",
+  furniture: "/assets/images/products/furniture/furniture1.png",
+  gadgets: "/assets/images/products/gadgets/macbookairm1.png",
+  grocery: "/assets/images/products/grocery/grocery1.png",
+  makeup: "/assets/images/products/makeup/makeup1.png",
+  medicine: "/assets/images/products/medicine/medicine1.png",
+  bags: "/assets/images/products/bags/bag1.png",
+};
 
 const CardTwo = ({
   _id,
+  name,
   title,
   image,
   price,
-  unit_of_measure,
+  unit_of_measure = 'piece',
   oldPrice,
-  shop_category,
-}: AllProduct) => {
+  shop_category = 'gadgets',
+  category
+}: Product) => {
+  const [imgError, setImgError] = useState(false);
+  
+  // Get display name (prefer title if available, fallback to name)
+  const displayName = title || name;
+  
+  // Get category for default image (prefer shop_category if available, fallback to category)
+  const displayCategory = shop_category || category || 'gadgets';
+  
+  // Get display image with fallback logic
+  const getDisplayImage = () => {
+    if (imgError) {
+      return DEFAULT_IMAGES[displayCategory] || DEFAULT_IMAGES.gadgets;
+    }
+
+    // If image is an array, use the first image
+    if (Array.isArray(image) && image.length > 0) {
+      return image[0];
+    }
+
+    // If image is a string and exists, use it
+    if (typeof image === 'string' && image) {
+      return image;
+    }
+
+    // Fallback to default image
+    return DEFAULT_IMAGES[displayCategory] || DEFAULT_IMAGES.gadgets;
+  };
+
+  if (!_id || !displayName || !price) {
+    console.warn('CardTwo: Missing required fields', { _id, name, title, price });
+    return null;
+  }
+
+  const displayImage = getDisplayImage();
+
   return (
-    <div className="card-two bg-secondary p-2.5 md:p-4 rounded-lg relative hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+    <div className="group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md">
       <Link
         href={`/products/${_id}`}
-        className="absolute top-0 left-0 w-full h-full"
-      />
-      {/* discount */}
-      {oldPrice && (
-        <p className="discount absolute top-3 right-3 sm:top-5 sm:right-5 text-xs px-2 py-1 rounded-md bg-green-600 text-white">
-          -{discountPercent(price, oldPrice)}
-        </p>
-      )}
-      <div className="img rounded-sm overflow-hidden">
-        <Image
-          src={image[0]}
-          width={500}
-          height={500}
-          alt={title}
-          className="bg-accent"
-        />
-      </div>
-      <div className="content mt-2 text-sm sm:text-base">
-        <h3 className="mb-2 line-clamp-1" title={title}>
-          {title}
-        </h3>
-
-        {oldPrice && (
-          <del className="font-semibold text-xs text-gray-700 dark:text-gray-300">
-            ${oldPrice.toFixed(2)}
-          </del>
+        className="relative flex h-48 items-center justify-center overflow-hidden bg-gray-100 transition-transform duration-300 ease-in-out group-hover:scale-105"
+      >
+        {displayImage && (
+          <Image
+            src={displayImage}
+            alt={displayName}
+            width={200}
+            height={200}
+            className="h-full w-full object-cover"
+            onError={() => setImgError(true)}
+          />
         )}
+        {oldPrice && (
+          <span className="absolute left-2 top-2 rounded bg-red-500 px-2 py-1 text-xs text-white">
+            {discountPercent(price, oldPrice)}% Off
+          </span>
+        )}
+      </Link>
 
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <p className="font-semibold">
-            <span>${price.toFixed(2)}</span>{" "}
-            <span className="text-[10px] align-top text-gray-700 dark:text-gray-300">
-              {unit_of_measure}
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <Link href={`/products/${_id}`} className="flex-1">
+          <h3 className="mb-2 text-sm font-medium text-gray-900 line-clamp-2">
+            {displayName}
+          </h3>
+        </Link>
+
+        <div className="mt-auto flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-900">
+              ${price.toFixed(2)}
+              {unit_of_measure && <span className="ml-1 text-xs text-gray-500">/{unit_of_measure}</span>}
             </span>
-          </p>
-
-          <AddToCartBtnWrapper
-            btnStyle="style-2"
-            cartItem={{
-              _id,
-              title,
-              image: image[0],
-              price,
+            {oldPrice && (
+              <span className="text-xs text-gray-500 line-through">
+                ${oldPrice.toFixed(2)}
+              </span>
+            )}
+          </div>
+          <AddToCartBtnWrapper 
+            product={{ 
+              _id, 
+              name: displayName, 
+              price, 
+              image: displayImage,
               unit_of_measure,
-              shop_category,
-            }}
+              shop_category: displayCategory
+            }} 
+            btnStyle="icon-only"
           />
         </div>
       </div>

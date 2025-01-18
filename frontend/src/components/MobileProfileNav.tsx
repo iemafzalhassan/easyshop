@@ -14,7 +14,7 @@ import { HiOutlineXMark } from "react-icons/hi2";
 import { IoBagCheckOutline, IoLogOut } from "react-icons/io5";
 import Modal from "./Modal";
 import { Button } from "./ui/button";
-import Logo from "./ui/Logo";
+import Logo from "@/assets/Logo";
 
 const ContainerVariants: Variants = {
   hidden: {

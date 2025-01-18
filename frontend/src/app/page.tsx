@@ -58,13 +58,13 @@ export default function Home({
   };
 }) {
   return (
-    <main>
+    <>
       <HeroSlider heroImages={heroImages} />
       <BannerSlider bannerImages={bannerImages} />
       <ShopCategories />
       <BooksCategory />
       <BekaryCategories />
       <FeaturedProducts featured={searchParams.featured} />
-    </main>
+    </>
   );
 }

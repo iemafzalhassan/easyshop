@@ -22,6 +22,81 @@ class PaymentService {
         }
     }
 
+    async createCheckoutSession(data) {
+        try {
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                mode: 'payment',
+                customer_email: data.customer.email,
+                client_reference_id: data.customer.id,
+                line_items: data.items.map(item => ({
+                    price_data: {
+                        currency: 'inr',
+                        product_data: {
+                            name: item.name,
+                            description: item.description,
+                            images: item.images
+                        },
+                        unit_amount: Math.round(item.price * 100)
+                    },
+                    quantity: item.quantity
+                })),
+                shipping_options: [
+                    {
+                        shipping_rate_data: {
+                            type: 'fixed_amount',
+                            fixed_amount: {
+                                amount: Math.round(data.shipping.cost * 100),
+                                currency: 'inr',
+                            },
+                            display_name: 'Standard shipping',
+                            delivery_estimate: {
+                                minimum: {
+                                    unit: 'business_day',
+                                    value: 3,
+                                },
+                                maximum: {
+                                    unit: 'business_day',
+                                    value: 5,
+                                },
+                            }
+                        }
+                    }
+                ],
+                success_url: `${process.env.FRONTEND_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.FRONTEND_URL}/checkout/cancel`
+            });
+
+            return session;
+        } catch (error) {
+            throw new AppError(error.message, 400);
+        }
+    }
+
+    async verifySession(sessionId) {
+        try {
+            const session = await stripe.checkout.sessions.retrieve(sessionId, {
+                expand: ['payment_intent', 'shipping']
+            });
+            return session;
+        } catch (error) {
+            throw new AppError(error.message, 400);
+        }
+    }
+
+    async verifyWebhookSignature(payload, signature) {
+        try {
+            const event = stripe.webhooks.constructEvent(
+                payload,
+                signature,
+                process.env.STRIPE_WEBHOOK_SECRET
+            );
+            return event;
+        } catch (error) {
+            throw new AppError(error.message, 400);
+        }
+    }
+
     async confirmPayment(paymentIntentId) {
         try {
             const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);

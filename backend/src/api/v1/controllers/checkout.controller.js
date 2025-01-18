@@ -6,6 +6,64 @@ const catchAsync = require('../utils/catchAsync');
 const paymentService = require('../../../services/payment.service');
 const emailService = require('../../../services/email.service');
 
+// Helper function to calculate shipping cost
+const calculateShippingCost = (items) => {
+    // Base shipping cost
+    let shippingCost = 50;
+
+    // Add ₹10 for each additional item
+    if (items.length > 1) {
+        shippingCost += (items.length - 1) * 10;
+    }
+
+    // Free shipping for orders over ₹1000
+    const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    if (totalAmount >= 1000) {
+        shippingCost = 0;
+    }
+
+    return shippingCost;
+};
+
+// Helper function to handle successful payment
+const handlePaymentSuccess = async (paymentIntent) => {
+    const order = await Order.findOne({ paymentId: paymentIntent.id });
+    if (!order) {
+        console.error('Order not found for payment:', paymentIntent.id);
+        return;
+    }
+
+    order.paymentStatus = 'paid';
+    order.status = 'processing';
+    await order.save();
+
+    // Send confirmation email
+    await emailService.sendOrderConfirmationEmail(
+        order.user.email,
+        order
+    );
+};
+
+// Helper function to handle failed payment
+const handlePaymentFailure = async (paymentIntent) => {
+    const order = await Order.findOne({ paymentId: paymentIntent.id });
+    if (!order) {
+        console.error('Order not found for payment:', paymentIntent.id);
+        return;
+    }
+
+    order.paymentStatus = 'failed';
+    order.status = 'cancelled';
+    await order.save();
+
+    // Restore product stock
+    for (const item of order.items) {
+        await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: item.quantity }
+        });
+    }
+};
+
 exports.initiateCheckout = catchAsync(async (req, res) => {
     // Get user's cart
     const cart = await Cart.findOne({ user: req.user._id })
@@ -32,10 +90,11 @@ exports.initiateCheckout = catchAsync(async (req, res) => {
         totalAmount += itemTotal;
 
         items.push({
-            product: item.product._id,
-            quantity: item.quantity,
+            name: item.product.name,
+            description: item.product.description,
+            images: item.product.images,
             price: item.product.price,
-            total: itemTotal
+            quantity: item.quantity
         });
     }
 
@@ -50,16 +109,11 @@ exports.initiateCheckout = catchAsync(async (req, res) => {
             email: req.user.email,
             name: req.user.name
         },
-        items: items.map(item => ({
-            id: item.product,
-            quantity: item.quantity,
-            price: item.price
-        })),
+        items,
         shipping: {
             cost: shippingCost,
             address: req.body.shippingAddress
-        },
-        totalAmount
+        }
     });
 
     res.status(200).json({
@@ -129,7 +183,7 @@ exports.webhookHandler = catchAsync(async (req, res) => {
     let event;
 
     try {
-        event = paymentService.constructWebhookEvent(req.body, sig);
+        event = paymentService.verifyWebhookSignature(req.body, sig);
     } catch (err) {
         throw new AppError('Webhook signature verification failed', 400);
     }
@@ -148,27 +202,3 @@ exports.webhookHandler = catchAsync(async (req, res) => {
 
     res.status(200).json({ received: true });
 });
-
-// Helper function to calculate shipping cost
-function calculateShippingCost(items) {
-    // Base shipping cost
-    let cost = 5;
-
-    // Calculate based on total items and weight
-    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-    
-    // Add $2 for every 5 items
-    cost += Math.floor(totalItems / 5) * 2;
-
-    // Cap at $20
-    return Math.min(cost, 20);
-}
-
-// Removed the following functions as they were not present in the updated code
-// exports.getOrderSummary = catchAsync(async (req, res, next) => {
-//     ...
-// });
-
-// exports.initiateRefund = catchAsync(async (req, res, next) => {
-//     ...
-// });

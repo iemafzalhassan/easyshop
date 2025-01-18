@@ -6,8 +6,15 @@ const { registerValidator, loginValidator } = require('../validators/auth.valida
 
 const router = express.Router();
 
+// Public routes
 router.post('/register', validate(registerValidator), AuthController.register);
 router.post('/login', validate(loginValidator), AuthController.login);
+
+// Protected routes
+router.get('/check', auth, (req, res) => {
+  res.status(200).json({ status: 'success', message: 'Authenticated' });
+});
 router.get('/profile', auth, AuthController.getProfile);
+router.put('/profile', auth, AuthController.updateProfile);
 
 module.exports = router;

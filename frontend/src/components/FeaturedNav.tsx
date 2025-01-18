@@ -12,10 +12,10 @@ const shops = [
   { title: "bakery", icon: "/assets/icons/bakery.png" },
   { title: "clothing", icon: "/assets/icons/clothing.png" },
   { title: "makeup", icon: "/assets/icons/makeup.png" },
-  //   { title: "bags", icon: "/assets/icons/bag.png" },
-  //   { title: "furniture", icon: "/assets/icons/furniture.png" },
-  //   { title: "books", icon: "/assets/icons/books.png" },
-  //   { title: "medicine", icon: "/assets/icons/medicine.png" },
+  { title: "bags", icon: "/assets/icons/bag.png" },
+  { title: "furniture", icon: "/assets/icons/furniture.png" },
+  { title: "books", icon: "/assets/icons/books.png" },
+  { title: "medicine", icon: "/assets/icons/medicine.png" },
 ];
 
 const FeaturedNav = () => {

@@ -1,3 +1,5 @@
+"use client";
+
 import ProductGrid from "@/components/ProductGrid";
 import SelectedFilters from "@/components/filters/SelectedFilters";
 import ProductLoader from "../../../components/loader/ProductLoader";

@@ -11,16 +11,18 @@ const {
     getAllProducts,
     getProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductsByCategory
 } = require('../controllers/product.controller');
 
 const router = express.Router();
 
 // Public routes
 router.get('/', getAllProducts);
+router.get('/category/:category', getProductsByCategory);
 router.get('/:id', getProduct);
 
-// Admin only routes
+// Admin/Seller routes
 router
     .route('/')
     .post(
