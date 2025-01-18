@@ -43,11 +43,12 @@ const AddToCartBtnWrapper = ({
   const { cartItems, selectedColor, selectedSize } = useAppSelector(
     (state) => state.cart
   );
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   // Return early if product is undefined
-  if (!product?.id) {
-    console.warn('AddToCartWrapper: Product is undefined or missing id');
+  if (!product?._id) {
+    console.warn('AddToCartWrapper: Product is undefined or missing _id');
     return null;
   }
 
@@ -86,35 +87,48 @@ const AddToCartBtnWrapper = ({
   };
 
   useEffect(() => {
-    if (product?.id) {
-      const foundItem = cartItems.find(item => item.id === product.id);
+    if (product?._id) {
+      const foundItem = cartItems.find(item => item._id === product._id);
       setAddedItem(foundItem);
     }
-  }, [product?.id, cartItems]);
+  }, [product?._id, cartItems]);
 
   // handle add to cart button
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      // If not authenticated, redirect to login with return URL
+      const returnUrl = `/checkout?product=${product._id}`;
+      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+
     if (product.shop_category === "clothing") {
       // checking color and size is selected or not
       if (selectedColor && selectedSize) {
-        addedItem
-          ? dispatch(removeFromCart(product.id))
-          : dispatch(
-              addToCart({
-                ...product,
-                image: getProductImage(product),
-                color: selectedColor,
-                size: selectedSize,
-              })
-            );
+        if (addedItem) {
+          dispatch(removeFromCart(product._id));
+        } else {
+          dispatch(
+            addToCart({
+              ...product,
+              image: getProductImage(product),
+              color: selectedColor,
+              size: selectedSize,
+            })
+          );
+          router.push('/checkout');
+        }
       }
     } else {
-      addedItem
-        ? dispatch(removeFromCart(product.id))
-        : dispatch(addToCart({
-            ...product,
-            image: getProductImage(product),
-          }));
+      if (addedItem) {
+        dispatch(removeFromCart(product._id));
+      } else {
+        dispatch(addToCart({
+          ...product,
+          image: getProductImage(product),
+        }));
+        router.push('/checkout');
+      }
     }
   };
 

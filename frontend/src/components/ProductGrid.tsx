@@ -122,7 +122,7 @@ const ProductGrid = ({ params, searchParams }: CategoryPageProps) => {
     <div>
       <div className="grid gap-4 grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product._id} product={product} />
         ))}
       </div>
       {/* Add pagination if needed */}

@@ -6,9 +6,12 @@ import BillingAddressForm from "@/components/forms/BillingAddressForm";
 import ShippingAddressForm from "@/components/forms/ShippingAddressForm";
 import { AnimatePresence, Variants, motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/store";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { addToCart } from "@/lib/features/cart/cartSlice";
+import { productService } from "@/services/product.service";
+import { useToast } from "@/hooks/useToast";
 
 const containerVariants: Variants = {
   hidden: {
@@ -21,7 +24,6 @@ const containerVariants: Variants = {
       staggerChildren: 0.1,
     },
   },
-
   exit: {
     opacity: 0,
     transition: {
@@ -41,7 +43,11 @@ const btns = [
 
 const CheckoutPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dispatch = useDispatch();
+  const { toast } = useToast();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { cartItems } = useSelector((state: RootState) => state.cart);
   const [activeForm, setActiveForm] = useState("billing");
   const [mounted, setMounted] = useState(false);
 
@@ -50,73 +56,97 @@ const CheckoutPage = () => {
   }, []);
 
   useEffect(() => {
-    if (mounted && !isAuthenticated) {
-      const currentPath = '/checkout';
-      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/checkout');
+      return;
     }
-  }, [mounted, isAuthenticated, router]);
 
-  if (!mounted || !isAuthenticated) {
-    return null;
-  }
+    // Check if we have a product ID in the URL
+    const productId = searchParams.get('product');
+    if (productId && !cartItems.some(item => item._id === productId)) {
+      // Fetch the product and add it to cart
+      const fetchAndAddProduct = async () => {
+        try {
+          const response = await productService.getProduct(productId);
+          if (response.status === 'success' && response.data.product) {
+            dispatch(addToCart({
+              ...response.data.product,
+              quantity: 1
+            }));
+          }
+        } catch (error) {
+          console.error('Error fetching product:', error);
+          toast({
+            title: "Error",
+            description: "Failed to add product to cart",
+            variant: "destructive",
+          });
+        }
+      };
+      fetchAndAddProduct();
+    }
+  }, [isAuthenticated, searchParams, cartItems, dispatch, router]);
+
+  if (!mounted) return null;
 
   return (
-    <div className="checkout-page">
-      <div className="container pt-7 pb-20">
+    <div className="container py-20">
+      <div className="flex items-center gap-4 mb-8">
         <HistoryBackBtn />
-        <div className="flex gap-7 flex-col pt-7 md:flex-row">
-          <AnimatePresence mode="wait">
-            <div className="left w-full md:w-3/5 bg-secondary shadow-lg py-10 px-5 rounded-lg overflow-hidden h-fit">
-              <h2 className="text-2xl font-bold mb-5">Checkout</h2>
-              <div className="flex gap-5 mb-5">
-                {btns.map((btn) => (
-                  <button
-                    type="button"
-                    key={btn.title}
-                    className={`${
-                      activeForm === btn.title
-                        ? "text-white"
-                        : "text-foreground"
-                    } px-5 py-2 bg-accent rounded-lg border capitalize relative`}
-                    onClick={() => setActiveForm(btn.title)}
-                  >
-                    <span className="relative z-10">{btn.title}</span>
-                    {activeForm === btn.title && (
-                      <motion.span
-                        layout
-                        layoutId="active"
-                        transition={{ type: "spring" }}
-                        className="absolute top-0 left-0 w-full h-full bg-primary rounded-lg"
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-              {activeForm === "billing" && (
-                <motion.div
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                >
-                  <BillingAddressForm />
-                </motion.div>
-              )}
-              {activeForm === "shipping" && (
-                <motion.div
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                >
-                  <ShippingAddressForm />
-                </motion.div>
-              )}
-            </div>
-          </AnimatePresence>
-          <div className="right w-full bg-secondary shadow-lg rounded-lg py-10 px-5 md:w-2/5 h-fit">
-            <OrderSummery />
+        <h1 className="text-2xl font-bold">Checkout</h1>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          className="lg:col-span-8"
+        >
+          <div className="flex items-center gap-4 mb-8">
+            {btns.map((btn) => (
+              <button
+                key={btn.title}
+                onClick={() => setActiveForm(btn.title)}
+                className={`px-6 py-2 rounded-lg capitalize ${
+                  activeForm === btn.title
+                    ? "bg-primary text-white"
+                    : "bg-gray-100"
+                }`}
+              >
+                {btn.title}
+              </button>
+            ))}
           </div>
+
+          <AnimatePresence mode="wait">
+            {activeForm === "billing" ? (
+              <motion.div
+                key="billing"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <BillingAddressForm />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="shipping"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <ShippingAddressForm />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        <div className="lg:col-span-4">
+          <OrderSummery />
         </div>
       </div>
     </div>

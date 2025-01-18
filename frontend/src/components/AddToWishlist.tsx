@@ -3,6 +3,7 @@
 import { toggleWishlist } from "@/lib/features/cart/cartSlice";
 import { useAppSelector } from "@/lib/hooks";
 import { AnimatePresence, Variants, motion } from "framer-motion";
+import { useMemo } from "react";
 import { IoIosHeartEmpty, IoMdHeart } from "react-icons/io";
 import { useDispatch } from "react-redux";
 import { Product } from "@/types/product";
@@ -50,8 +51,11 @@ const AddToWishlist = ({ product }: AddToWishlistProps) => {
   const { wishlists } = useAppSelector((state) => state.cart);
   const dispatch = useDispatch();
 
-  const isProductInWishlist = wishlists.some(
-    (wishlist) => wishlist.id === product.id
+  const isInWishlist = useMemo(
+    () => wishlists.some(
+      (wishlist) => wishlist._id === product._id
+    ),
+    [wishlists, product]
   );
 
   const handleToggleWishlist = () => {
@@ -69,7 +73,7 @@ const AddToWishlist = ({ product }: AddToWishlistProps) => {
         className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
       >
         <motion.div variants={item}>
-          {isProductInWishlist ? (
+          {isInWishlist ? (
             <IoMdHeart className="text-2xl text-red-500" />
           ) : (
             <IoIosHeartEmpty className="text-2xl text-gray-600 dark:text-gray-300" />
