@@ -6,9 +6,9 @@ const authRoutes = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
-  // Handle API requests
+  // Handle API requests first
   if (pathname.startsWith('/api/v1')) {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!backendUrl) {
@@ -18,11 +18,8 @@ export function middleware(request: NextRequest) {
       );
     }
 
-    // Forward the request to the backend
     const url = new URL(request.url);
     url.href = `${backendUrl}${pathname}`;
-
-    // Forward the token if present
     const requestHeaders = new Headers(request.headers);
     if (token) {
       requestHeaders.set('Authorization', `Bearer ${token}`);
@@ -33,18 +30,38 @@ export function middleware(request: NextRequest) {
     });
   }
 
-  // Check if it's a protected route and user is not authenticated
-  if (protectedRoutes.some(route => pathname.startsWith(route)) && !token) {
-    const response = NextResponse.redirect(
-      new URL(`/login?redirect=${pathname}`, request.url)
-    );
-    return response;
+  // Check authentication state
+  const isAuthenticated = !!token;
+
+  // Handle protected routes
+  if (protectedRoutes.some(route => pathname.startsWith(route))) {
+    if (!isAuthenticated) {
+      // Store the attempted URL to redirect back after login
+      return NextResponse.redirect(
+        new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url)
+      );
+    }
+    // User is authenticated, allow access to protected route
+    return NextResponse.next();
   }
 
-  // Check if it's an auth route and user is already authenticated
-  if (authRoutes.includes(pathname) && token) {
-    const response = NextResponse.redirect(new URL('/', request.url));
-    return response;
+  // Handle auth routes (login/register)
+  if (authRoutes.includes(pathname)) {
+    if (isAuthenticated) {
+      // Get the redirect URL from query params
+      const params = new URLSearchParams(search);
+      const redirectUrl = params.get('redirect');
+      
+      // If there's a redirect URL and it's a protected route, go there
+      if (redirectUrl && protectedRoutes.some(route => redirectUrl.startsWith(route))) {
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
+      }
+      
+      // Otherwise go to home
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+    // User is not authenticated, allow access to auth routes
+    return NextResponse.next();
   }
 
   // Add CORS headers

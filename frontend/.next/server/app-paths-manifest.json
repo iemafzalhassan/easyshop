@@ -1,6 +1,1 @@
-{
-  "/page": "app/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/not-found": "app/not-found.js",
-  "/icon.svg/route": "app/icon.svg/route.js"
-}
+{}

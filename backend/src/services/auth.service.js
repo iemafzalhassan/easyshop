@@ -5,7 +5,7 @@ const User = require('../api/v1/models/user.model');
 
 class AuthService {
   static async hashPassword(password) {
-    const salt = await bcrypt.genSalt(12);
+    const salt = await bcrypt.genSalt(10); // Use same salt rounds as model
     return bcrypt.hash(password, salt);
   }
 
@@ -24,9 +24,7 @@ class AuthService {
   }
 
   static async createUser(userData) {
-    // Hash password before saving
-    userData.password = await this.hashPassword(userData.password);
-    
+    // Let the model middleware handle password hashing
     const user = new User(userData);
     await user.save();
     
@@ -48,7 +46,8 @@ class AuthService {
       throw new AppError('Invalid credentials', 401);
     }
     
-    const isValid = await bcrypt.compare(password, user.password);
+    // Use the model's comparePassword method
+    const isValid = await user.comparePassword(password);
     if (!isValid) {
       throw new AppError('Invalid credentials', 401);
     }
@@ -99,29 +98,31 @@ class AuthService {
   }
 
   static async changePassword(userId, currentPassword, newPassword) {
+    // Find user with password
     const user = await User.findById(userId).select('+password');
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
     // Validate current password
-    const isValid = await bcrypt.compare(currentPassword, user.password);
+    const isValid = await user.comparePassword(currentPassword);
     if (!isValid) {
       throw new AppError('Current password is incorrect', 401);
     }
 
-    // Hash new password
-    user.password = await this.hashPassword(newPassword);
-    
-    // Increment token version to invalidate existing tokens
-    user.tokenVersion += 1;
-    
+    // Update password
+    user.password = newPassword;
     await user.save();
 
-    // Generate new token
+    // Generate new token with incremented version
+    user.tokenVersion += 1;
+    await user.save();
+
     const token = this.generateToken(user._id, user.tokenVersion);
 
+    // Remove password from response
     user.password = undefined;
+
     return { user, token };
   }
 

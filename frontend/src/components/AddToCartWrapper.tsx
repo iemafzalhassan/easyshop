@@ -3,16 +3,17 @@
 import {
   addToCart,
   removeFromCart,
+  setPendingCartItem,
 } from "@/lib/features/cart/cartSlice";
 import { useAppSelector } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaShoppingCart } from "react-icons/fa";
-import { PiBasketFill } from "react-icons/pi";
 import { useDispatch } from "react-redux";
 import { Button } from "./ui/button";
-import { Product, CartItem } from "@/types/product";
+import { Product, CartItem, BaseMongoProduct } from "@/types/product.d";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/useToast";
 
 // Default images for each category
 const DEFAULT_IMAGES: Record<string, string> = {
@@ -31,19 +32,22 @@ type AddToCartWrapperProps = {
   product?: Product;
   btnStyle?: "icon-only" | "full-width" | "compact";
   className?: string;
+  redirectToCheckout?: boolean;
 };
 
-const AddToCartBtnWrapper = ({
+const AddToCartWrapper = ({
   product,
   btnStyle = "full-width",
   className,
+  redirectToCheckout = false,
 }: AddToCartWrapperProps) => {
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const [addedItem, setAddedItem] = useState<CartItem | undefined>();
   const { cartItems, selectedColor, selectedSize } = useAppSelector(
     (state) => state.cart
   );
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, loading: authLoading, currentUser } = useAppSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   // Return early if product is undefined
@@ -54,35 +58,28 @@ const AddToCartBtnWrapper = ({
 
   // Get the main image from product
   const getProductImage = (product: Product): string => {
-    // If image is an array, use the first image
     if (Array.isArray(product.image) && product.image.length > 0) {
       return product.image[0];
     }
 
-    // If image is a string and exists, use it
     if (typeof product.image === 'string' && product.image) {
-      // If it's a Cloudinary URL, use it as is
       if (product.image.includes('cloudinary.com')) {
         return product.image;
       }
-      // If it's a local path starting with /, use it as is
       if (product.image.startsWith('/')) {
         return product.image;
       }
-      // If it's just a filename and we have a category, prepend the correct path
       if (product.shop_category) {
         const category = product.shop_category.toLowerCase();
         return `/assets/images/products/${category}/${product.image}`;
       }
     }
 
-    // Use category default image if available
     if (product.shop_category) {
       const category = product.shop_category.toLowerCase();
       return DEFAULT_IMAGES[category] || DEFAULT_IMAGES.gadgets;
     }
 
-    // Final fallback
     return DEFAULT_IMAGES.gadgets;
   };
 
@@ -95,54 +92,85 @@ const AddToCartBtnWrapper = ({
 
   // handle add to cart button
   const handleAddToCart = () => {
+    if (authLoading) {
+      return; // Prevent action while auth state is loading
+    }
+
+    // Extract base product fields
+    const baseProduct: BaseMongoProduct = {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      oldPrice: product.oldPrice,
+      unit_of_measure: product.unit_of_measure,
+      shop_category: product.shop_category,
+    };
+
+    // Create cart item with required fields
+    const cartItem: CartItem = {
+      ...baseProduct,
+      image: getProductImage(product),
+      quantity: 1,
+      color: selectedColor || undefined,
+      size: selectedSize || undefined,
+    };
+
+    // For clothing items, require color and size selection
+    if (product.shop_category === "clothing") {
+      if (!selectedColor || !selectedSize) {
+        showError("Please select both color and size before adding to cart");
+        return;
+      }
+    }
+
+    // If user is not authenticated, store the item and redirect to login
     if (!isAuthenticated) {
-      // If not authenticated, redirect to login with return URL
-      const returnUrl = `/checkout?product=${product._id}`;
-      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      // Store the item before redirecting
+      dispatch(setPendingCartItem(cartItem));
+      
+      // Determine return URL
+      const returnUrl = redirectToCheckout ? '/checkout' : window.location.pathname;
+      
+      // Use router.replace to prevent back navigation to login page
+      router.replace(`/login?redirect=${encodeURIComponent(returnUrl)}`);
       return;
     }
 
-    if (product.shop_category === "clothing") {
-      // checking color and size is selected or not
-      if (selectedColor && selectedSize) {
-        if (addedItem) {
-          dispatch(removeFromCart(product._id));
-        } else {
-          dispatch(
-            addToCart({
-              ...product,
-              image: getProductImage(product),
-              color: selectedColor,
-              size: selectedSize,
-            })
-          );
+    try {
+      // Handle add/remove from cart
+      if (addedItem) {
+        dispatch(removeFromCart(product._id));
+        success("Item has been removed from your cart");
+      } else {
+        dispatch(addToCart(cartItem));
+        success("Item has been added to your cart");
+        
+        // If redirectToCheckout is true and user is authenticated, go to checkout
+        if (redirectToCheckout && isAuthenticated) {
           router.push('/checkout');
         }
       }
-    } else {
-      if (addedItem) {
-        dispatch(removeFromCart(product._id));
-      } else {
-        dispatch(addToCart({
-          ...product,
-          image: getProductImage(product),
-        }));
-        router.push('/checkout');
-      }
+    } catch (error) {
+      console.error('Error handling cart action:', error);
+      showError("Failed to update cart. Please try again.");
     }
   };
+
+  const buttonClasses = cn(
+    "flex items-center justify-center gap-2 rounded-lg",
+    "bg-primary hover:bg-primary/90 text-white font-medium",
+    "transition-colors duration-200",
+    "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+    "disabled:opacity-50 disabled:cursor-not-allowed",
+    className
+  );
 
   if (btnStyle === 'icon-only') {
     return (
       <button
         onClick={handleAddToCart}
-        className={cn(
-          "inline-flex items-center justify-center p-2 rounded-lg",
-          "bg-primary hover:bg-primary/90 text-white",
-          "transition-colors duration-200",
-          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-          className
-        )}
+        disabled={authLoading}
+        className={cn(buttonClasses, "p-2")}
       >
         <FaShoppingCart className="w-5 h-5" />
       </button>
@@ -153,13 +181,8 @@ const AddToCartBtnWrapper = ({
     return (
       <button
         onClick={handleAddToCart}
-        className={cn(
-          "w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg",
-          "bg-primary hover:bg-primary/90 text-white font-medium",
-          "transition-colors duration-200",
-          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-          className
-        )}
+        disabled={authLoading}
+        className={cn(buttonClasses, "w-full px-6 py-3")}
       >
         <FaShoppingCart className="w-5 h-5" />
         {addedItem ? "Remove from Cart" : "Add to Cart"}
@@ -170,13 +193,8 @@ const AddToCartBtnWrapper = ({
   return (
     <button
       onClick={handleAddToCart}
-      className={cn(
-        "flex items-center justify-center gap-2 px-4 py-2 rounded-lg",
-        "bg-primary hover:bg-primary/90 text-white font-medium",
-        "transition-colors duration-200",
-        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-        className
-      )}
+      disabled={authLoading}
+      className={cn(buttonClasses, "px-4 py-2")}
     >
       <FaShoppingCart className="w-5 h-5" />
       {addedItem ? "Remove from Cart" : "Add to Cart"}
@@ -184,4 +202,4 @@ const AddToCartBtnWrapper = ({
   );
 };
 
-export default AddToCartBtnWrapper;
+export default AddToCartWrapper;

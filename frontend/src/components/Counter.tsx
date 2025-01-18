@@ -2,9 +2,7 @@
 
 import {
   CartItem,
-  decrementAmount,
-  handleCountValue,
-  incrementAmount,
+  updateQuantity,
 } from "@/lib/features/cart/cartSlice";
 import { useAppSelector } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
@@ -13,55 +11,66 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
 type CounterProps = {
-  product: CartItem;
-  quantity: number;
+  product?: CartItem;
   className?: string;
+  value?: number;
+  onChange?: (value: number) => void;
+  min?: number;
+  max?: number;
 };
 
-const Counter = ({ className, quantity, product }: CounterProps) => {
-  const { cartItems, countValue } = useAppSelector((state) => state.cart);
+const Counter = ({ 
+  className, 
+  product,
+  value: controlledValue,
+  onChange,
+  min = 1,
+  max = 99,
+}: CounterProps) => {
+  const { cartItems } = useAppSelector((state) => state.cart);
   const dispatch = useDispatch();
 
-  const addedItem = cartItems.find((item) => item._id === product._id);
+  const currentValue = controlledValue ?? (product ? 
+    cartItems.find(item => item._id === product._id)?.quantity ?? 1
+    : 1);
 
-  const handleCount = (num: number) => {
-    if (addedItem) {
-      if (num === 1) {
-        dispatch(incrementAmount(product._id));
-      } else {
-        dispatch(decrementAmount(product._id));
-      }
+  const handleCount = (increment: boolean) => {
+    const newValue = increment ? currentValue + 1 : currentValue - 1;
+    
+    if (newValue < min || newValue > max) return;
+
+    if (product) {
+      dispatch(updateQuantity({ _id: product._id, quantity: newValue }));
     }
-    dispatch(handleCountValue(num === 1 ? "increment" : "decrement"));
+    
+    onChange?.(newValue);
   };
 
   return (
-    <div className={cn("flex items-center max-w-[200px]", className)}>
+    <div className={cn("flex items-center gap-2 max-w-[200px]", className)}>
       <Button
         type="button"
         variant="outline"
-        className="text-xl select-none"
-        disabled={addedItem?.amount ? addedItem?.amount <= 1 : countValue <= 1}
-        onClick={() => handleCount(-1)}
+        size="icon"
+        className="h-8 w-8"
+        disabled={currentValue <= min}
+        onClick={() => handleCount(false)}
       >
         -
       </Button>
       <Input
-        className="text-center"
-        readOnly
-        value={addedItem?.amount || countValue}
         type="number"
+        className="text-center h-8 w-16"
+        value={currentValue}
+        readOnly
       />
       <Button
         type="button"
         variant="outline"
-        className="text-xl select-none"
-        disabled={
-          quantity && addedItem?.amount
-            ? addedItem?.amount >= quantity
-            : countValue >= quantity
-        }
-        onClick={() => handleCount(1)}
+        size="icon"
+        className="h-8 w-8"
+        disabled={currentValue >= max}
+        onClick={() => handleCount(true)}
       >
         +
       </Button>

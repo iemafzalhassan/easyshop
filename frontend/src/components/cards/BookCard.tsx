@@ -1,6 +1,6 @@
 import Image from "next/image";
 import React from "react";
-import AddToCartBtnWrapper from "../AddToCartWrapper";
+import AddToCartWrapper from "@/components/AddToCartWrapper";
 import Link from "next/link";
 
 const BookCard = ({
@@ -46,7 +46,7 @@ const BookCard = ({
           )}
         </p>
 
-        <AddToCartBtnWrapper
+        <AddToCartWrapper
           cartItem={{
             _id,
             title,

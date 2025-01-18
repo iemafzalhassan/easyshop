@@ -3,7 +3,7 @@
 import { discountPercent } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import AddToCartBtnWrapper from "@/components/AddToCartWrapper";
+import AddToCartWrapper from "@/components/AddToCartWrapper";
 import { TbCurrencyTaka } from "react-icons/tb";
 
 const CardOne = ({
@@ -54,7 +54,7 @@ const CardOne = ({
           </p>
 
           <div className="mt-3">
-            <AddToCartBtnWrapper
+            <AddToCartWrapper
               cartItem={{
                 _id,
                 title,

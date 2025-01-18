@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { addToCart } from "@/lib/features/cart/cartSlice";
 import { productService } from "@/services/product.service";
 import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
 
 const containerVariants: Variants = {
   hidden: {
@@ -48,7 +49,7 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { cartItems } = useSelector((state: RootState) => state.cart);
-  const [activeForm, setActiveForm] = useState("billing");
+  const [activeForm, setActiveForm] = useState("shipping");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -56,101 +57,88 @@ const CheckoutPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login?redirect=/checkout');
+    if (mounted && !isAuthenticated) {
+      router.push("/auth/login");
       return;
     }
+  }, [mounted, isAuthenticated, router]);
 
-    // Check if we have a product ID in the URL
-    const productId = searchParams.get('product');
-    if (productId && !cartItems.some(item => item._id === productId)) {
-      // Fetch the product and add it to cart
-      const fetchAndAddProduct = async () => {
-        try {
-          const response = await productService.getProduct(productId);
-          if (response.status === 'success' && response.data.product) {
-            dispatch(addToCart({
-              ...response.data.product,
-              quantity: 1
-            }));
-          }
-        } catch (error) {
-          console.error('Error fetching product:', error);
-          toast({
-            title: "Error",
-            description: "Failed to add product to cart",
-            variant: "destructive",
-          });
-        }
-      };
-      fetchAndAddProduct();
+  useEffect(() => {
+    const productId = searchParams.get("product");
+    const quantity = searchParams.get("quantity");
+    const color = searchParams.get("color");
+    const size = searchParams.get("size");
+
+    const getProduct = async () => {
+      try {
+        const product = await productService.getProductById(productId!);
+        dispatch(
+          addToCart({
+            ...product,
+            quantity: Number(quantity),
+            selectedColor: color,
+            selectedSize: size,
+          })
+        );
+      } catch (error: any) {
+        toast({
+          title: error?.message || "Something went wrong!",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (productId) {
+      getProduct();
     }
-  }, [isAuthenticated, searchParams, cartItems, dispatch, router]);
+  }, [dispatch, searchParams, toast]);
 
-  if (!mounted) return null;
+  return mounted && isAuthenticated ? (
+    <AnimatePresence>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="container py-6"
+      >
+        <div className="flex items-center gap-4 mb-8">
+          <HistoryBackBtn />
+          <h1 className="text-2xl font-bold">Checkout</h1>
+        </div>
 
-  return (
-    <div className="container py-20">
-      <div className="flex items-center gap-4 mb-8">
-        <HistoryBackBtn />
-        <h1 className="text-2xl font-bold">Checkout</h1>
-      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <div className="flex items-center gap-4 mb-8">
+              {btns.map((btn) => (
+                <Button
+                  key={btn.title}
+                  type="button"
+                  variant={activeForm === btn.title ? "default" : "outline"}
+                  className={`capitalize ${
+                    activeForm === btn.title
+                      ? "bg-primary text-white hover:bg-primary/90 hover:text-white"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => setActiveForm(btn.title)}
+                >
+                  {btn.title}
+                </Button>
+              ))}
+            </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          className="lg:col-span-8"
-        >
-          <div className="flex items-center gap-4 mb-8">
-            {btns.map((btn) => (
-              <button
-                key={btn.title}
-                onClick={() => setActiveForm(btn.title)}
-                className={`px-6 py-2 rounded-lg capitalize ${
-                  activeForm === btn.title
-                    ? "bg-primary text-white"
-                    : "bg-gray-100"
-                }`}
-              >
-                {btn.title}
-              </button>
-            ))}
+            {activeForm === "billing" ? (
+              <BillingAddressForm />
+            ) : (
+              <ShippingAddressForm />
+            )}
           </div>
 
-          <AnimatePresence mode="wait">
-            {activeForm === "billing" ? (
-              <motion.div
-                key="billing"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <BillingAddressForm />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="shipping"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <ShippingAddressForm />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        <div className="lg:col-span-4">
           <OrderSummery />
         </div>
-      </div>
-    </div>
-  );
+      </motion.div>
+    </AnimatePresence>
+  ) : null;
 };
 
 export default CheckoutPage;

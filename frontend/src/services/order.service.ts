@@ -1,26 +1,35 @@
 import { api } from './api';
-import { CartItem } from '../store/slices/cart-slice';
 
-export interface OrderItem extends CartItem {
-  productId: string;
+export interface ShippingAddress {
+  street: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  country: string;
+  phone: string;
+}
+
+export interface PaymentInfo {
+  method: 'card' | 'upi' | 'netbanking' | 'cod';
 }
 
 export interface CreateOrderData {
-  items: OrderItem[];
-  shippingAddress: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  paymentMethod: 'card' | 'cod';
+  shippingAddress: ShippingAddress;
+  paymentInfo: PaymentInfo;
   totalAmount: number;
 }
 
-export interface Order extends CreateOrderData {
-  id: string;
-  userId: string;
+export interface Order {
+  _id: string;
+  user: string;
+  items: Array<{
+    product: string;
+    quantity: number;
+    price: number;
+  }>;
+  shippingAddress: ShippingAddress;
+  paymentInfo: PaymentInfo;
+  totalAmount: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
@@ -28,6 +37,7 @@ export interface Order extends CreateOrderData {
 
 export const orderService = {
   async createOrder(data: CreateOrderData) {
+    console.log('Creating order with data:', data);
     const response = await api.post('/orders', data);
     return response.data;
   },
@@ -48,7 +58,7 @@ export const orderService = {
   },
 
   async cancelOrder(id: string) {
-    const response = await api.post(`/orders/${id}/cancel`);
+    const response = await api.delete(`/orders/${id}`);
     return response.data;
-  },
+  }
 };

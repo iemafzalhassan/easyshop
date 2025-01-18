@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import AddToCartBtnWrapper from "@/components/AddToCartWrapper";
+import AddToCartWrapper from "@/components/AddToCartWrapper";
 import AddToWishlist from "@/components/AddToWishlist";
 import { TbCurrencyTaka } from "react-icons/tb";
 
@@ -39,7 +39,7 @@ const WishlistCard = (props: AllProduct) => {
           <span className="">${price}</span>
           {oldPrice && <del className="text-sm text-gray-400">${oldPrice}</del>}
         </p>
-        <AddToCartBtnWrapper
+        <AddToCartWrapper
           btnStyle="style-4"
           cartItem={{
             _id,

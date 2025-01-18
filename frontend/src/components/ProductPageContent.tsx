@@ -7,6 +7,8 @@ import { api } from "@/services/api";
 import { Suspense, useState, useEffect } from "react";
 import { SingleProductType } from "@/types/product";
 import { enrichProductWithMetadata } from "@/lib/utils/product-metadata";
+import AddToCartWrapper from '@/components/AddToCartWrapper';
+import AddToWishlist from './AddToWishlist';
 
 type ProductPageContentProps = {
   id?: string;
@@ -99,6 +101,13 @@ const ProductPageContent = ({ id, slug }: ProductPageContentProps) => {
             />
           </Suspense>
         </div>
+      </div>
+      <div className="flex flex-col gap-4">
+        <AddToCartWrapper 
+          product={product} 
+          redirectToCheckout={true}
+        />
+        <AddToWishlist product={product} />
       </div>
     </section>
   );

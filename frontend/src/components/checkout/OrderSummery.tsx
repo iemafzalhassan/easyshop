@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { removeFromCart } from "@/lib/features/cart/cartSlice";
+import Link from "next/link";
+import { removeFromCart, clearCart } from "@/lib/features/cart/cartSlice";
 import { useAppSelector } from "@/lib/hooks";
 import { totalPrice } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,24 +12,129 @@ import { HiMiniXMark } from "react-icons/hi2";
 import Skeleton from "@/components/loader/Skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import Counter from "@/components/Counter";
+import { orderService } from "@/services/order.service";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
+import { Toast } from "@/components/ui/toast";
 
 const paymentMethods = [
   {
-    title: "cash on delivery",
+    title: "Cash on Delivery",
+    value: "cod"
   },
+  {
+    title: "Card Payment",
+    value: "card"
+  },
+  {
+    title: "UPI Payment",
+    value: "upi"
+  },
+  {
+    title: "Net Banking",
+    value: "netbanking"
+  }
 ];
 
 const OrderSummery = () => {
   const [selectedMethod, setSelectedMethod] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { cartItems } = useAppSelector((state) => state.cart);
+  const { shippingAddress, billingAddress } = useAppSelector((state) => state.checkout);
   const dispatch = useDispatch();
+  const { toast } = useToast();
+  const router = useRouter();
 
   const handleSelectMethod = (title: string) => {
     setSelectedMethod(title);
   };
 
-  const placeOrder = async () => {};
+  const placeOrder = async () => {
+    try {
+      setIsLoading(true);
+
+      if (!shippingAddress && !billingAddress) {
+        toast({
+          title: "Address Required",
+          description: "Please fill in shipping or billing address",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!selectedMethod) {
+        toast({
+          title: "Payment Method Required",
+          description: "Please select a payment method",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const address = shippingAddress || billingAddress;
+      
+      if (!address?.phone?.match(/^[0-9]{10}$/) || !address?.pinCode?.match(/^[0-9]{6}$/)) {
+        toast({
+          title: "Invalid Format",
+          description: "Phone number must be 10 digits and PIN code must be 6 digits",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calculate total amount
+      const subtotal = totalPrice(cartItems);
+      const shipping = 5.00;
+      const tax = 2.50;
+      const total = subtotal + shipping + tax;
+      
+      // Create order data
+      const orderData = {
+        shippingAddress: {
+          street: address?.streetAddress || "",
+          city: address?.city || "",
+          state: address?.state || "",
+          pinCode: address?.pinCode || "",  
+          country: address?.country || "",
+          phone: address?.phone || "",  
+        },
+        paymentInfo: {  
+          method: selectedMethod,
+        },
+        totalAmount: total,  
+      };
+
+      console.log('Sending order data:', orderData);  
+
+      // Place the order
+      const response = await orderService.createOrder(orderData);
+
+      // Show success message
+      toast({
+        title: "Order placed successfully!",
+        description: "Your order has been placed successfully.",
+        variant: "default",
+      });
+
+      // Clear cart
+      dispatch(clearCart());
+
+      // Redirect to order summary
+      router.push(`/orders/${response.data.order._id}`);
+    } catch (error: any) {
+      console.error('Order error:', error.response?.data || error);  
+      const errorMessage = error.response?.data?.message || error.message || "Something went wrong!";
+      toast({
+        title: "Failed to place order",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -40,7 +146,7 @@ const OrderSummery = () => {
         <h2 className="text-2xl font-bold mb-5">Order Summary</h2>
         <div className="pb-4">
           {cartItems.length <= 0 && (
-            <div className="text-center py-6">No prodduct select!</div>
+            <div className="text-center py-6">No product selected!</div>
           )}
           {cartItems.map((item) => (
             <motion.div
@@ -61,23 +167,27 @@ const OrderSummery = () => {
                   src={item.image}
                   width={50}
                   height={50}
-                  alt={item.title}
+                  alt={item.name}
                   className="object-cover rounded-md"
                 />
-                <div>
+                <div className="space-y-1">
                   <Link
                     href={`/products/${item._id}`}
                     className="line-clamp-1 hover:text-primary hover:underline"
                   >
-                    {item.title}
+                    {item.name}
                   </Link>
-                  <p className="text-muted-foreground">
-                    {item.amount} {item.unit_of_measure} * ${item.price}
+                  <Counter
+                    product={item}
+                    className="scale-90 origin-left"
+                  />
+                  <p className="text-muted-foreground text-sm">
+                    Unit Price: ${item.price}
                   </p>
                 </div>
               </div>
               <p className="text-muted-foreground">
-                ${Number(item.price) * (item?.amount || 1)}
+                ${Number(item.price) * (item?.quantity || 1)}
               </p>
             </motion.div>
           ))}
@@ -92,16 +202,16 @@ const OrderSummery = () => {
               {paymentMethods.map((method) => (
                 <Card
                   className={`${
-                    method.title === selectedMethod
+                    method.value === selectedMethod
                       ? "text-primary border-primary"
                       : ""
                   } cursor-pointer`}
                   key={method.title}
-                  onClick={() => handleSelectMethod(method.title)}
+                  onClick={() => handleSelectMethod(method.value)}
                 >
                   <CardHeader>
-                    <CardTitle className="text-base">
-                      Cash on Delivery
+                    <CardTitle className="text-base capitalize">
+                      {method.title}
                     </CardTitle>
                   </CardHeader>
                 </Card>
@@ -109,50 +219,39 @@ const OrderSummery = () => {
             </div>
           </div>
         )}
-        <div className="flex flex-col gap-5 border-t pt-4">
-          <div className="flex justify-between font-semibold">
-            <p>Subtotal</p>
-            <p>${totalPrice(cartItems)}</p>
+
+        {cartItems.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span>Subtotal:</span>
+              <span>${totalPrice(cartItems)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Shipping:</span>
+              <span>$5.00</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Tax:</span>
+              <span>$2.50</span>
+            </div>
+            <div className="flex justify-between items-center font-bold">
+              <span>Total:</span>
+              <span>${totalPrice(cartItems) + 7.50}</span>
+            </div>
+            <Button
+              type="button"
+              className="w-full text-white hover:text-white bg-primary hover:bg-primary/90"
+              disabled={!selectedMethod || isLoading}
+              onClick={placeOrder}
+            >
+              {isLoading ? "Placing Order..." : "Place Order"}
+            </Button>
           </div>
-          <div className="flex justify-between">
-            <p>Shipping</p>
-            <p className="text-muted-foreground">$10</p>
-          </div>
-          <div className="flex justify-between">
-            <p>Tax</p>
-            <p className="text-muted-foreground">$10</p>
-          </div>
-          <div className="flex justify-between font-semibold">
-            <p>Total</p>
-            <p>${totalPrice(cartItems) + 10 + 10}</p>
-          </div>
-        </div>
-        <Button
-          type="button"
-          disabled={cartItems.length <= 0 || selectedMethod === ""}
-          className="w-full mt-5 capitalize"
-          onClick={placeOrder}
-        >
-          Place Order
-        </Button>
+        )}
       </div>
     </AnimatePresence>
   ) : (
-    <div className="flex flex-col gap-4">
-      <Skeleton className="h-7 rounded-2xl w-full max-[200px]" />
-      {[...Array(5)].map((_, i) => (
-        <Skeleton key={i} className="h-14 rounded-lg w-full" />
-      ))}
-
-      <Skeleton className="h-7 rounded-lg w-full max-[150px] mx-auto py-4" />
-
-      {[...Array(4)].map((_, i) => (
-        <div className="flex justify-between items-center" key={i}>
-          <Skeleton className="h-5 rounded-lg w-16" />
-          <Skeleton className="h-5 rounded-lg w-10" />
-        </div>
-      ))}
-    </div>
+    <Skeleton />
   );
 };
 

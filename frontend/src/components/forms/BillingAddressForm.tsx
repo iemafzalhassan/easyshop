@@ -2,6 +2,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useDispatch } from "react-redux";
+import { setBillingAddress } from "@/lib/features/checkout/checkoutSlice";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,34 +19,39 @@ import { Textarea } from "../ui/textarea";
 import { Variants, motion } from "framer-motion";
 
 const formSchema = z.object({
-  title: z.string().min(3),
-  phone: z.string().min(11),
-  country: z.string().min(3),
-  city: z.string().min(3),
-  state: z.string().min(3),
-  zip: z.string().min(3),
-  streetAddress: z.string().min(3),
+  title: z.string(),
+  phone: z.string()
+    .min(10, "Phone number must be 10 digits")
+    .max(10, "Phone number must be 10 digits")
+    .regex(/^[0-9]{10}$/, "Phone number must contain only digits"),
+  country: z.string().min(2, "Country is required"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+  pinCode: z.string()
+    .min(6, "PIN code must be 6 digits")
+    .max(6, "PIN code must be 6 digits")
+    .regex(/^[0-9]{6}$/, "PIN code must contain only digits"),
+  streetAddress: z.string().min(5, "Street address is required"),
 });
 
 const BillingAddressForm = () => {
+  const dispatch = useDispatch();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "Billing",
-      phone: "",
-      country: "United States",
-      city: "Kipnuk",
-      state: "AK",
-      zip: "99614",
-      streetAddress: "2231 Kidd Avenue",
+      phone: "9499999995",
+      country: "India",
+      city: "Muzaffarpur",
+      state: "Bihar",
+      pinCode: "800000",
+      streetAddress: "Kya Raaz-E-Fitna hai Hungama ho gya hai Jahane-E-Mishal me",
     },
   });
 
-  // Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    console.log(values);
-  }
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    dispatch(setBillingAddress(data));
+  };
 
   const itemVariants: Variants = {
     hidden: { opacity: 0, y: 50 },
@@ -88,7 +95,7 @@ const BillingAddressForm = () => {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+88017*********" {...field} />
+                      <Input placeholder="+91 94******95" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -121,7 +128,7 @@ const BillingAddressForm = () => {
                   <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                      <Input placeholder="City" {...field} />
+                      <Input placeholder="Muzaffarpur" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,7 +146,7 @@ const BillingAddressForm = () => {
                   <FormItem>
                     <FormLabel>State</FormLabel>
                     <FormControl>
-                      <Input placeholder="State" {...field} />
+                      <Input placeholder="Bihar" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -150,12 +157,12 @@ const BillingAddressForm = () => {
             <motion.div variants={itemVariants} className="w-full md:w-1/2">
               <FormField
                 control={form.control}
-                name="zip"
+                name="pinCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ZIP</FormLabel>
+                    <FormLabel>PIN Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="eg: 1400" {...field} />
+                      <Input placeholder="eg: 800000" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,7 +180,7 @@ const BillingAddressForm = () => {
                   <FormLabel>Street Address</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="eg: 2148 Straford Park"
+                      placeholder="eg: Kya Raaz-E-Fitna hai Hungama ho gya hai Jahane-E-Mishal me"
                       id="streetAddress"
                       {...field}
                     />

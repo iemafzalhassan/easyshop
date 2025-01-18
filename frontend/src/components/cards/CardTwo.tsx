@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import AddToCartBtnWrapper from "../AddToCartWrapper";
+import AddToCartWrapper from "@/components/AddToCartWrapper";
 import { discountPercent } from "../../lib/utils";
 import { Product } from "@/types/product";
 import { useState } from "react";
@@ -108,7 +108,7 @@ const CardTwo = ({
               </span>
             )}
           </div>
-          <AddToCartBtnWrapper 
+          <AddToCartWrapper
             product={{ 
               _id, 
               name: displayName, 

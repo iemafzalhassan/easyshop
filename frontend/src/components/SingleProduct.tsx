@@ -3,7 +3,7 @@
 import { EmblaOptionsType } from "embla-carousel";
 import Link from "next/link";
 import Image from "next/image";
-import AddToCartBtnWrapper from "@/components/AddToCartWrapper";
+import AddToCartWrapper from "@/components/AddToCartWrapper";
 import AddToWishlist from "@/components/AddToWishlist";
 import Counter from "@/components/Counter";
 import HistoryBackBtn from "@/components/HistoryBackBtn";
@@ -12,6 +12,9 @@ import ProductImageSlider from "@/components/sliders/ProductImageSlider";
 import SelectVariants from "@/components/SelectVariants";
 import { SingleProductType } from "@/types/product";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useAppSelector } from "@/lib/hooks";
+import { Button } from "./ui/button";
 
 type SingleProductProps = {
   product: SingleProductType;
@@ -36,9 +39,12 @@ const getMainImage = (image: string | string[] | undefined | null): string => {
 };
 
 const SingleProduct = ({ product }: SingleProductProps) => {
+  const [quantity, setQuantity] = useState(1);
+  const { cartItems, selectedColor, selectedSize } = useAppSelector(state => state.cart);
+  
   const {
     _id,
-    title,
+    name,
     image,
     shop_category,
     categories,
@@ -47,111 +53,141 @@ const SingleProduct = ({ product }: SingleProductProps) => {
     oldPrice,
     rating,
     description,
+    colors = [],
+    sizes = [],
+    stock = 99,
   } = product;
 
-  const productImages = getProductImages(image);
   const mainImage = getMainImage(image);
+  const images = getProductImages(image);
+  const isClothing = shop_category?.toLowerCase() === 'clothing';
+  const isInCart = cartItems.some(item => item._id === _id);
 
   return (
-    <div className="container pb-16 pt-10">
-      <HistoryBackBtn />
-      <div className="flex gap-10 mt-6 flex-col md:flex-row">
-        <div className="img w-full md:w-2/5 max-w-md mx-auto">
-          <ProductImageSlider images={productImages} options={OPTIONS} />
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center gap-4">
+        <HistoryBackBtn />
+        <h1 className="text-2xl font-bold">{name}</h1>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Product Images */}
+        <div className="relative aspect-square">
+          <ProductImageSlider images={images} options={OPTIONS} />
         </div>
 
-        <div className="right w-full md:w-3/5">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-              {title}
-            </h1>
-            <AddToWishlist 
-              product={{
-                ...product,
-                image: mainImage,
-              }} 
-            />
-          </div>
+        {/* Product Details */}
+        <div className="flex flex-col gap-6">
+          {/* Basic Info */}
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">{formatPrice(price)}</h2>
+                {oldPrice && (
+                  <p className="text-muted-foreground line-through">
+                    {formatPrice(oldPrice)}
+                  </p>
+                )}
+              </div>
+              <AddToWishlist product={product} />
+            </div>
 
-          <RatingStar ratingNumber={rating} className="mt-2" />
-          <div className="flex gap-3 items-end mt-4">
-            <p className="text-2xl text-primary font-semibold">
-              {formatPrice(price)}
-            </p>
-            {oldPrice && oldPrice > (price || 0) && (
-              <del className="text-gray-400 dark:text-gray-500 font-semibold">
-                {formatPrice(oldPrice)}
-              </del>
+            <div className="flex items-center gap-2">
+              <RatingStar rating={rating || 0} />
+              <span className="text-muted-foreground">
+                ({rating || 0} ratings)
+              </span>
+            </div>
+
+            {description && (
+              <p className="text-muted-foreground">{description}</p>
             )}
           </div>
 
-          {description && (
-            <div className="mt-4">
-              <p className="text-gray-600 dark:text-gray-300">{description}</p>
-            </div>
-          )}
-
-          <div className="mt-6 space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Product Details
-            </h3>
-            <ul className="space-y-2">
-              {unit_of_measure && (
-                <li>
-                  <span className="font-medium text-gray-900 dark:text-white">Unit:</span>{" "}
-                  <span className="text-gray-600 dark:text-gray-300">{unit_of_measure}</span>
-                </li>
-              )}
-              {shop_category && (
-                <li>
-                  <span className="font-medium text-gray-900 dark:text-white">Category:</span>{" "}
-                  <span className="text-gray-600 dark:text-gray-300 capitalize">{shop_category}</span>
-                </li>
-              )}
-              {categories && categories.length > 0 && (
-                <li>
-                  <span className="font-medium text-gray-900 dark:text-white">Tags:</span>{" "}
-                  <span className="text-gray-600 dark:text-gray-300">
-                    {categories.join(", ")}
-                  </span>
-                </li>
-              )}
-            </ul>
-
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-4">
-                <Counter />
-                <div className="flex-1" />
-                <div className="flex gap-3">
-                  <AddToCartBtnWrapper
-                    product={{
-                      ...product,
-                      image: mainImage,
-                    }}
-                    className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          {/* Product Options */}
+          <div className="space-y-4">
+            {isClothing && (
+              <>
+                {colors.length > 0 && (
+                  <SelectVariants
+                    label="Colors"
+                    options={colors}
+                    type="color"
                   />
+                )}
+                {sizes.length > 0 && (
+                  <SelectVariants
+                    label="Sizes"
+                    options={sizes}
+                    type="size"
+                  />
+                )}
+              </>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Quantity</label>
+              <Counter
+                value={quantity}
+                onChange={setQuantity}
+                max={stock}
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-4">
+            <AddToCartWrapper
+              product={{
+                ...product,
+                image: mainImage,
+                quantity,
+              }}
+              btnStyle="full-width"
+              className={cn(
+                "w-full",
+                isInCart ? "bg-red-600 hover:bg-red-700" : "bg-primary hover:bg-primary/90"
+              )}
+            />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                const url = new URL("/checkout", window.location.origin);
+                url.searchParams.set("product", _id);
+                if (quantity) url.searchParams.set("quantity", quantity.toString());
+                if (selectedColor) url.searchParams.set("color", selectedColor);
+                if (selectedSize) url.searchParams.set("size", selectedSize);
+                window.location.href = url.toString();
+              }}
+            >
+              Buy Now
+            </Button>
+          </div>
+
+          {/* Additional Info */}
+          {unit_of_measure && (
+            <p className="text-sm text-muted-foreground">
+              Unit: {unit_of_measure}
+            </p>
+          )}
+          {categories?.length > 0 && (
+            <div className="flex gap-2 text-sm">
+              <span>Categories:</span>
+              <div className="flex gap-2">
+                {categories.map((category, index) => (
                   <Link
-                    href={`/checkout?product=${_id}`}
-                    className="bg-accent hover:bg-accent/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                    key={category}
+                    href={`/category/${category}`}
+                    className="text-primary hover:underline"
                   >
-                    Buy Now
+                    {category}
+                    {index < categories.length - 1 && ","}
                   </Link>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* Additional product information */}
-          <div className="mt-8">
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Shipping Information
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Free shipping on orders over $50. Standard delivery 3-5 business days.
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

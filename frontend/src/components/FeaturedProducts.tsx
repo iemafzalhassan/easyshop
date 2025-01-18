@@ -54,109 +54,71 @@ const FeaturedProducts = ({ featured }: { featured?: string }) => {
     }
   }, [dispatch, featured, showError, lastFetch]);
 
-  // Effect for initial load and refresh
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  // Effect for handling visibility changes (tab switching)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchProducts(true); // Force refresh when tab becomes visible
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [fetchProducts]);
-
-  // Effect for handling focus (window switching)
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchProducts(true); // Force refresh when window gains focus
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [fetchProducts]);
-
-  const renderProducts = () => {
-    if (loading) {
-      return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {[...Array(8)].map((_, index) => (
-            <div key={index} className="animate-pulse">
-              <div className="h-48 bg-gray-200 rounded-lg"></div>
-              <div className="mt-4 space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="text-center py-8">
-          <p className="text-red-500">{error}</p>
-        </div>
-      );
-    }
-
-    if (!products || products.length === 0) {
-      return (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No products found</p>
-        </div>
-      );
-    }
-
+  if (error) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product._id}
-            variants="card-two"
-            product={{
-              ...product,
-              unit_of_measure: product.unit_of_measure || 'piece',
-              shop_category: product.shop_category || product.category || 'gadgets'
-            }}
-          />
-        ))}
+      <div className="text-center py-8">
+        <p className="text-destructive">{error}</p>
+        <button
+          onClick={() => fetchProducts(true)}
+          className="mt-4 text-primary hover:underline"
+        >
+          Try Again
+        </button>
       </div>
     );
-  };
+  }
 
   return (
-    <section className="featured-products">
+    <section className="space-y-8 py-8">
       <div className="container">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-bold sm:text-2xl">Featured Products</h2>
-              <p className="text-base text-gray-500">
-                Browse our featured collection of products
+        <div className="flex flex-col gap-6">
+          {/* Header */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold tracking-tight">
+                Featured Products
+              </h2>
+              <p className="text-muted-foreground">
+                Browse our curated selection of featured products
               </p>
             </div>
             <Link
               href="/products"
-              className="text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               View All
             </Link>
           </div>
 
+          {/* Navigation */}
           <FeaturedNav />
 
-          {renderProducts()}
+          {/* Products Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product._id}
+                  product={{
+                    ...product,
+                    unit_of_measure: product.unit_of_measure || 'piece',
+                    shop_category: product.shop_category || product.category || 'gadgets'
+                  }}
+                  variants="card-four"
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

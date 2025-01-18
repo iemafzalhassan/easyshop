@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import AddToCartBtnWrapper from "@/components/AddToCartWrapper";
+import AddToCartWrapper from "@/components/AddToCartWrapper";
 import { discountPercent } from "@/lib/utils";
 import { TbCurrencyTaka } from "react-icons/tb";
 
@@ -50,8 +50,7 @@ const CardThree = ({
             <del className="text-sm text-gray-400">${oldPrice.toFixed(2)}</del>
           )}
         </p>
-        <AddToCartBtnWrapper
-          btnStyle="style-3"
+        <AddToCartWrapper
           cartItem={{
             _id,
             title,

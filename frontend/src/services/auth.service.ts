@@ -1,4 +1,5 @@
 import { api } from './api';
+import Cookies from 'js-cookie';
 
 export interface LoginCredentials {
   email: string;
@@ -26,7 +27,9 @@ export const AUTH_ENDPOINTS = {
 
 const setToken = (token: string) => {
   if (typeof window !== 'undefined') {
+    // Set token in both localStorage and cookie
     localStorage.setItem('token', token);
+    Cookies.set('token', token, { expires: 7 }); // 7 days expiry
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 };
@@ -34,6 +37,7 @@ const setToken = (token: string) => {
 const removeToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
+    Cookies.remove('token');
     delete api.defaults.headers.common['Authorization'];
   }
 };
@@ -94,8 +98,9 @@ export const authService = {
 
   async checkAuth(): Promise<boolean> {
     try {
+      // Check both localStorage and cookie
       const token = typeof window !== 'undefined' 
-        ? localStorage.getItem('token')
+        ? localStorage.getItem('token') || Cookies.get('token')
         : null;
         
       if (!token) {
@@ -106,7 +111,13 @@ export const authService = {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       const response = await api.get(AUTH_ENDPOINTS.CHECK);
-      return response.data.status === 'success';
+      const isValid = response.data.status === 'success';
+
+      if (!isValid) {
+        await this.logout();
+      }
+
+      return isValid;
     } catch (error: any) {
       console.error('Auth check error:', error);
       if (error.response?.status === 401) {
