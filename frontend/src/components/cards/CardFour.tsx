@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AddToCartWrapper from "@/components/AddToCartWrapper";
 import { discountPercent } from "../../lib/utils";
-import { Product } from "../../types/product";
+import { Product } from "@/types/product.d";
 import { cn } from "@/lib/utils";
 import React from 'react';
 
@@ -17,54 +17,48 @@ const CardFour = ({
   unit_of_measure,
   shop_category,
 }: Product) => {
-  const getImagePath = (url: string) => {
+  const getImagePath = React.useCallback((url: string) => {
     try {
       // If it's a full URL (e.g., Cloudinary), use it as is
       if (url.startsWith('http')) {
         return url;
       }
+
+      // Default images for each category
+      const defaultImages: Record<string, string> = {
+        'bags': '/assets/images/products/bags/bag2.png',
+        'bakery': '/assets/images/products/bakery/bakery22.png',
+        'books': '/assets/images/products/books/book9.png',
+        'clothing': '/assets/images/products/clothing/hoodie1.png',
+        'furniture': '/assets/images/products/furniture/furn17.png',
+        'gadgets': '/assets/images/products/gadgets/DZIR-615Z10.png',
+        'grocery': '/assets/images/products/grocery/broccoli.png',
+        'makeup': '/assets/images/products/makeup/makeup23.png',
+        'medicine': '/assets/images/products/medicine/medicine19.png'
+      };
       
+      const category = shop_category?.toLowerCase() || '';
+
+      // If no specific image is provided or if it's empty, use the default image for the category
+      if (!url || url.trim() === '') {
+        return defaultImages[category] || defaultImages['gadgets'];
+      }
+
+      // If the URL already starts with /assets/images/products/, use it as is
+      if (url.startsWith('/assets/images/products/')) {
+        return url;
+      }
+
       // Remove any leading slashes and ensure proper path
       const cleanPath = url.replace(/^\/+/, '');
       
-      // If it's already a complete assets path, use it directly
-      if (cleanPath.startsWith('assets/')) {
-        return `/${cleanPath}`;
-      }
-
-      // Map category to the correct folder name
-      const categoryFolders = {
-        'gadgets': 'gadgets',
-        'clothing': 'clothing',
-        'makeup': 'makeup',
-        'furniture': 'furniture',
-        'grocery': 'grocery',
-        'books': 'books',
-        'medicine': 'medicine',
-        'bakery': 'bakery',
-        'bags': 'bags'
-      };
-
-      const category = shop_category?.toLowerCase() || '';
-      const folder = categoryFolders[category] || category;
-
-      // If it's a product image
-      if (cleanPath.includes('products/')) {
-        return `/assets/images/products/${folder}/${cleanPath.split('/').pop()}`;
-      }
-
-      // If it's a category image
-      if (cleanPath.includes('categories/')) {
-        return `/assets/images/categories/${cleanPath.split('/').pop()}`;
-      }
-
-      // Default case: assume it's a product image
-      return `/assets/images/products/${folder}/${cleanPath}`;
+      // Return the full path
+      return `/assets/images/products/${category}/${cleanPath}`;
     } catch (error) {
       console.error('Error processing image path:', error);
-      return `/assets/images/categories/${shop_category?.toLowerCase() || 'general'}.png`;
+      return '/assets/images/products/gadgets/DZIR-615Z10.png';
     }
-  };
+  }, [shop_category]);
 
   const displayImage = React.useMemo(() => {
     try {
@@ -89,7 +83,7 @@ const CardFour = ({
       console.error('Error getting display image:', error);
       return `/assets/images/categories/${shop_category?.toLowerCase() || 'general'}.png`;
     }
-  }, [image, imageUrl, shop_category]);
+  }, [image, imageUrl, shop_category, getImagePath]);
 
   const displayTitle = title || name || 'Untitled Product';
 
@@ -153,15 +147,18 @@ const CardFour = ({
 
       {/* Add to Cart */}
       <div className="absolute bottom-0 left-0 right-0 translate-y-full bg-background/80 p-4 backdrop-blur-sm transition-transform duration-300 group-hover:translate-y-0">
-        <AddToCartWrapper product={{
-          _id,
-          name: displayTitle,
-          price,
-          oldPrice,
-          image: displayImage,
-          unit_of_measure,
-          shop_category,
-        }} />
+        <AddToCartWrapper 
+          product={{
+            _id,
+            name: displayTitle,
+            price,
+            oldPrice,
+            imageUrl: displayImage,
+            unit_of_measure,
+            shop_category,
+            image: Array.isArray(image) ? image : [displayImage]
+          }} 
+        />
       </div>
     </div>
   );

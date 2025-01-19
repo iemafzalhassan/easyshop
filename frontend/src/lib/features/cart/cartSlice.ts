@@ -257,12 +257,12 @@ const cartSlice = createSlice({
       })
       .addCase(syncCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.cartItems = action.payload.items.map(item => ({
+        state.cartItems = action.payload.items.map((item: CartItem) => ({
           product: item.product,
           quantity: item.quantity,
           price: item.price, // Price in INR
-          selectedColor: item.color || null,
-          selectedSize: item.size || null
+          selectedColor: item.selectedColor || null,
+          selectedSize: item.selectedSize || null
         }));
         saveCartToStorage(state.cartItems);
       })

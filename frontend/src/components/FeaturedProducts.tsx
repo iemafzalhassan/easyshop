@@ -43,23 +43,56 @@ const FeaturedProducts = ({ featured }: { featured?: string }) => {
 
       if (response.status === 'success' && Array.isArray(response.data.products)) {
         const formattedProducts = response.data.products.map(product => {
-          // Get the filename from imageUrl
-          const imageFilename = product.imageUrl?.split('/').pop();
+          // Ensure shop_category is set correctly
+          const shop_category = product.shop_category || product.category || featured || 'gadgets';
+          
+          // Format image paths
+          const formatImagePath = (img: string) => {
+            if (img.startsWith('http')) return img;
+            if (img.startsWith('/assets/images/products/')) return img;
+            
+            // Default images for each category
+            const defaultImages: Record<string, string> = {
+              'bags': '/assets/images/products/bags/bag2.png',
+              'bakery': '/assets/images/products/bakery/bakery22.png',
+              'books': '/assets/images/products/books/book9.png',
+              'clothing': '/assets/images/products/clothing/hoodie1.png',
+              'furniture': '/assets/images/products/furniture/furn17.png',
+              'gadgets': '/assets/images/products/gadgets/DZIR-615Z10.png',
+              'grocery': '/assets/images/products/grocery/broccoli.png',
+              'makeup': '/assets/images/products/makeup/makeup23.png',
+              'medicine': '/assets/images/products/medicine/medicine19.png'
+            };
+
+            const category = shop_category.toLowerCase();
+
+            // If no specific image is provided or if it's empty, use the default image for the category
+            if (!img || img.trim() === '') {
+              return defaultImages[category] || defaultImages['gadgets'];
+            }
+            
+            // Remove any leading slashes
+            const cleanPath = img.replace(/^\/+/, '');
+            
+            // Return the full path
+            return `/assets/images/products/${category}/${cleanPath}`;
+          };
           
           return {
             ...product,
-            // Keep both image and imageUrl fields
+            // Handle image array
             image: Array.isArray(product.image) && product.image.length > 0 
-              ? product.image.map(img => img.split('/').pop()) // Keep only filenames
+              ? product.image.map(formatImagePath).filter(Boolean)
               : [],
-            imageUrl: imageFilename || null,
+            // Handle single imageUrl
+            imageUrl: product.imageUrl ? formatImagePath(product.imageUrl) : undefined,
             rating: product.rating || 0,
-            reviews: product.reviews?.length || 0,
+            reviews: product.reviews || [],
             shop: typeof product.shop === 'string' 
               ? { _id: product.shop, name: '' }
               : product.shop || { _id: '', name: '' },
             unit_of_measure: product.unit_of_measure || 'piece',
-            shop_category: product.shopCategory || product.category || 'gadgets'
+            shop_category
           };
         });
 
@@ -76,7 +109,7 @@ const FeaturedProducts = ({ featured }: { featured?: string }) => {
     } finally {
       dispatch(setLoading(false));
     }
-  }, [dispatch, featured, showError]); // Only depend on stable dependencies
+  }, [dispatch, featured, showError, lastFetch]); // Only depend on stable dependencies
 
   // Only fetch on mount or when featured changes
   useEffect(() => {

@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaShoppingCart } from "react-icons/fa";
 import { Button } from "./ui/button";
-import { Product, CartItem, BaseMongoProduct } from "@/types/product.d";
+import { Product, CartItem } from "@/types/product.d";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 
@@ -83,8 +83,12 @@ const AddToCartWrapper = ({
   };
 
   useEffect(() => {
-    if (product?._id) {
-      const foundItem = cartItems.find(item => item._id === product._id);
+    if (product?._id && cartItems) {
+      const foundItem = cartItems.find(item => 
+        typeof item.product === 'string' 
+          ? item.product === product._id 
+          : item.product._id === product._id
+      );
       setAddedItem(foundItem);
     }
   }, [product?._id, cartItems]);
@@ -149,45 +153,25 @@ const AddToCartWrapper = ({
     "flex items-center justify-center gap-2 rounded-lg",
     "bg-primary hover:bg-primary/90 text-white font-medium",
     "transition-colors duration-200",
-    "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-    "disabled:opacity-50 disabled:cursor-not-allowed",
+    {
+      "w-full py-2": btnStyle === "full-width",
+      "px-3 py-2": btnStyle === "compact",
+      "p-2 aspect-square": btnStyle === "icon-only",
+    },
     className
   );
 
-  if (btnStyle === 'icon-only') {
-    return (
-      <button
-        onClick={handleAddToCart}
-        disabled={authLoading}
-        className={cn(buttonClasses, "p-2")}
-      >
-        <FaShoppingCart className="w-5 h-5" />
-      </button>
-    );
-  }
-
-  if (btnStyle === 'full-width') {
-    return (
-      <button
-        onClick={handleAddToCart}
-        disabled={authLoading}
-        className={cn(buttonClasses, "w-full px-6 py-3")}
-      >
-        <FaShoppingCart className="w-5 h-5" />
-        {addedItem ? "Remove from Cart" : "Add to Cart"}
-      </button>
-    );
-  }
-
   return (
-    <button
+    <Button
       onClick={handleAddToCart}
+      className={buttonClasses}
       disabled={authLoading}
-      className={cn(buttonClasses, "px-4 py-2")}
     >
-      <FaShoppingCart className="w-5 h-5" />
-      {addedItem ? "Remove from Cart" : "Add to Cart"}
-    </button>
+      <FaShoppingCart className="h-4 w-4" />
+      {btnStyle !== "icon-only" && (
+        <span>{addedItem ? "Remove from Cart" : "Add to Cart"}</span>
+      )}
+    </Button>
   );
 };
 

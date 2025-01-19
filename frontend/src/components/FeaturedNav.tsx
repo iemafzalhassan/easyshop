@@ -20,7 +20,7 @@ const shops = [
 
 const FeaturedNav = () => {
   const searchParams = useSearchParams();
-  const activeShop = searchParams.get("featured") || "gadgets";
+  const activeShop = searchParams?.get("featured") || "gadgets";
 
   return (
     <div className="flex gap-4 items-center flex-wrap">

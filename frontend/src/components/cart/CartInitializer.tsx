@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/lib/store";
+import { RootState, AppDispatch } from "@/lib/store";
 import { initializeCart, fetchCart, clearCart } from "@/lib/features/cart/cartSlice";
 import { useRouter } from "next/navigation";
 
 const CartInitializer = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { isAuthenticated, currentUser } = useSelector(
     (state: RootState) => state.auth
