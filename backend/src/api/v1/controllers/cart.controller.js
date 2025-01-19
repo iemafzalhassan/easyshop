@@ -3,12 +3,39 @@ const Product = require('../models/product.model');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 
+const MAX_RETRIES = 3;
+const MAX_QUANTITY_PER_ITEM = 5;
+
+const retryOperation = async (operation) => {
+    let lastError;
+    
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+            return await operation();
+        } catch (error) {
+            lastError = error;
+            if (!error.name === 'VersionError') {
+                throw error;
+            }
+            // Wait a bit before retrying
+            await new Promise(resolve => setTimeout(resolve, 50 * Math.pow(2, attempt)));
+        }
+    }
+    
+    throw lastError;
+};
+
 exports.getCart = catchAsync(async (req, res) => {
-    let cart = await Cart.findOne({ user: req.user._id })
-        .populate('items.product', 'name price images');
+    const cart = await Cart.findOne({ user: req.user._id })
+        .populate('items.product', 'name price images stock');
 
     if (!cart) {
-        cart = await Cart.create({ user: req.user._id, items: [] });
+        // Create new cart if doesn't exist
+        const newCart = await Cart.create({ user: req.user._id, items: [] });
+        return res.status(200).json({
+            status: 'success',
+            data: { cart: newCart }
+        });
     }
 
     res.status(200).json({
@@ -18,131 +45,219 @@ exports.getCart = catchAsync(async (req, res) => {
 });
 
 exports.addToCart = catchAsync(async (req, res) => {
-    const { productId, quantity = 1 } = req.body;
+    const { productId, quantity = 1, color, size } = req.body;
 
-    // Validate product exists
+    if (quantity > MAX_QUANTITY_PER_ITEM) {
+        throw new AppError(`Maximum quantity allowed per item is ${MAX_QUANTITY_PER_ITEM}`, 400);
+    }
+
     const product = await Product.findById(productId);
     if (!product) {
         throw new AppError('Product not found', 404);
     }
 
-    // Check if product is in stock
     if (product.stock < quantity) {
-        throw new AppError('Product is out of stock', 400);
+        throw new AppError(`Only ${product.stock} items available in stock`, 400);
     }
 
-    let cart = await Cart.findOne({ user: req.user._id });
+    const result = await retryOperation(async () => {
+        let cart = await Cart.findOne({ user: req.user._id });
 
-    if (!cart) {
-        cart = await Cart.create({
-            user: req.user._id,
-            items: [{ product: productId, quantity }]
-        });
-    } else {
-        // Check if product already exists in cart
-        const itemIndex = cart.items.findIndex(
-            item => item.product.toString() === productId
-        );
-
-        if (itemIndex > -1) {
-            // Product exists in cart, update quantity
-            const newQuantity = cart.items[itemIndex].quantity + quantity;
-            if (product.stock < newQuantity) {
-                throw new AppError('Requested quantity exceeds available stock', 400);
-            }
-            cart.items[itemIndex].quantity = newQuantity;
+        if (!cart) {
+            cart = await Cart.create({
+                user: req.user._id,
+                items: [{
+                    product: productId,
+                    quantity,
+                    color: color || null,
+                    size: size || null,
+                    price: product.price
+                }]
+            });
         } else {
-            // Product does not exists in cart, add new item
-            cart.items.push({ product: productId, quantity });
+            const existingItem = cart.items.find(item => 
+                item.product.toString() === productId &&
+                item.color === (color || null) &&
+                item.size === (size || null)
+            );
+
+            if (existingItem) {
+                const newQuantity = existingItem.quantity + quantity;
+                if (newQuantity > MAX_QUANTITY_PER_ITEM) {
+                    throw new AppError(`Cannot add more than ${MAX_QUANTITY_PER_ITEM} items of the same product`, 400);
+                }
+                if (product.stock < newQuantity) {
+                    throw new AppError(`Only ${product.stock} items available in stock`, 400);
+                }
+                existingItem.quantity = newQuantity;
+            } else {
+                cart.items.push({
+                    product: productId,
+                    quantity,
+                    color: color || null,
+                    size: size || null,
+                    price: product.price
+                });
+            }
+
+            await cart.save();
         }
 
-        await cart.save();
-    }
-
-    // Populate product details
-    await cart.populate('items.product', 'name price images');
+        await cart.populate('items.product', 'name price images stock');
+        return cart;
+    });
 
     res.status(200).json({
         status: 'success',
-        data: { cart }
+        data: { cart: result }
     });
 });
 
 exports.updateCartItem = catchAsync(async (req, res) => {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, color, size } = req.body;
 
-    // Validate product exists
+    if (quantity > MAX_QUANTITY_PER_ITEM) {
+        throw new AppError(`Maximum quantity allowed per item is ${MAX_QUANTITY_PER_ITEM}`, 400);
+    }
+
     const product = await Product.findById(productId);
     if (!product) {
         throw new AppError('Product not found', 404);
     }
 
-    // Check if product is in stock
     if (product.stock < quantity) {
-        throw new AppError('Requested quantity exceeds available stock', 400);
+        throw new AppError(`Only ${product.stock} items available in stock`, 400);
     }
 
-    const cart = await Cart.findOne({ user: req.user._id });
-    if (!cart) {
-        throw new AppError('Cart not found', 404);
-    }
+    const result = await retryOperation(async () => {
+        const cart = await Cart.findOne({ user: req.user._id });
+        if (!cart) {
+            throw new AppError('Cart not found', 404);
+        }
 
-    const itemIndex = cart.items.findIndex(
-        item => item.product.toString() === productId
-    );
+        const item = cart.items.find(item => 
+            item.product.toString() === productId &&
+            item.color === (color || null) &&
+            item.size === (size || null)
+        );
 
-    if (itemIndex === -1) {
-        throw new AppError('Product not found in cart', 404);
-    }
+        if (!item) {
+            throw new AppError('Product not found in cart', 404);
+        }
 
-    // Update quantity
-    cart.items[itemIndex].quantity = quantity;
-    await cart.save();
-
-    // Populate product details
-    await cart.populate('items.product', 'name price images');
+        item.quantity = quantity;
+        await cart.save();
+        await cart.populate('items.product', 'name price images stock');
+        return cart;
+    });
 
     res.status(200).json({
         status: 'success',
-        data: { cart }
+        data: { cart: result }
     });
 });
 
 exports.removeFromCart = catchAsync(async (req, res) => {
-    const { productId } = req.params;
+    const result = await retryOperation(async () => {
+        const cart = await Cart.findOne({ user: req.user._id });
+        if (!cart) {
+            throw new AppError('Cart not found', 404);
+        }
 
-    const cart = await Cart.findOne({ user: req.user._id });
-    if (!cart) {
-        throw new AppError('Cart not found', 404);
-    }
+        const itemIndex = cart.items.findIndex(
+            item => item.product.toString() === req.params.itemId
+        );
 
-    // Remove item from cart
-    cart.items = cart.items.filter(
-        item => item.product.toString() !== productId
-    );
+        if (itemIndex === -1) {
+            throw new AppError('Product not found in cart', 404);
+        }
 
-    await cart.save();
-
-    // Populate product details
-    await cart.populate('items.product', 'name price images');
+        cart.items.splice(itemIndex, 1);
+        await cart.save();
+        await cart.populate('items.product', 'name price images stock');
+        return cart;
+    });
 
     res.status(200).json({
         status: 'success',
-        data: { cart }
+        data: { cart: result }
     });
 });
 
 exports.clearCart = catchAsync(async (req, res) => {
-    const cart = await Cart.findOne({ user: req.user._id });
-    if (!cart) {
-        throw new AppError('Cart not found', 404);
+    const result = await retryOperation(async () => {
+        const cart = await Cart.findOne({ user: req.user._id });
+        if (!cart) {
+            throw new AppError('Cart not found', 404);
+        }
+
+        await cart.clearCart();
+        return cart;
+    });
+
+    res.status(200).json({
+        status: 'success',
+        data: { cart: result }
+    });
+});
+
+exports.syncCart = catchAsync(async (req, res) => {
+    const { items } = req.body;
+    
+    if (!Array.isArray(items)) {
+        throw new AppError('Items must be an array', 400);
     }
 
-    cart.items = [];
-    await cart.save();
+    // Validate products and collect data
+    const productsMap = new Map();
+    const validatedItems = [];
 
-    res.status(204).json({
+    // First, get all products in one query
+    const productIds = [...new Set(items.map(item => item.productId))];
+    const products = await Product.find({ _id: { $in: productIds } });
+    products.forEach(product => productsMap.set(product._id.toString(), product));
+
+    // Validate items
+    for (const item of items) {
+        const { productId, quantity, color, size } = item;
+        
+        if (quantity > MAX_QUANTITY_PER_ITEM) {
+            throw new AppError(`Maximum quantity allowed per item is ${MAX_QUANTITY_PER_ITEM}`, 400);
+        }
+
+        const product = productsMap.get(productId);
+        if (!product) {
+            throw new AppError(`Product with ID ${productId} not found`, 404);
+        }
+
+        if (product.stock < quantity) {
+            throw new AppError(`Only ${product.stock} items available for ${product.name}`, 400);
+        }
+
+        validatedItems.push({
+            product: productId,
+            quantity,
+            color: color || null,
+            size: size || null,
+            price: product.price
+        });
+    }
+
+    const result = await retryOperation(async () => {
+        let cart = await Cart.findOne({ user: req.user._id });
+        
+        if (!cart) {
+            cart = new Cart({ user: req.user._id });
+        }
+
+        cart.items = validatedItems;
+        await cart.save();
+        await cart.populate('items.product', 'name price images stock');
+        return cart;
+    });
+
+    res.status(200).json({
         status: 'success',
-        data: null
+        data: { cart: result }
     });
 });

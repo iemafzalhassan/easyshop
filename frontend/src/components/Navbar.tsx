@@ -1,6 +1,7 @@
 "use client";
 
 import { setCurrentUser } from "@/lib/features/auth/authSlice";
+import { handleCartOpen } from "@/lib/features/cart/cartSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { authService } from "@/services/auth.service";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HiMenuAlt2 } from "react-icons/hi";
 import { IoChevronDownOutline } from "react-icons/io5";
+import { BsCartCheckFill } from "react-icons/bs";
 import MobileMenu from "./MobileMenu";
 import { ProfileMenu } from "./ProfileMenu";
 import SearchBar from "./SearchBar";
@@ -61,6 +63,7 @@ const Navbar = () => {
   const dispatch = useAppDispatch();
   
   const { currentUser } = useAppSelector((state) => state.auth);
+  const { cartItems } = useAppSelector((state) => state.cart);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -140,6 +143,19 @@ const Navbar = () => {
         <div className="ml-auto flex items-center gap-x-4">
           <SearchBar />
           <ToggleTheme />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => dispatch(handleCartOpen(true))}
+            className="relative hidden md:flex"
+          >
+            <BsCartCheckFill className="h-5 w-5" />
+            {cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                {cartItems.length}
+              </span>
+            )}
+          </Button>
           {currentUser ? (
             <ProfileMenu user={currentUser} onLogout={handleLogout} />
           ) : (

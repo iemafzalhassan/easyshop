@@ -6,7 +6,7 @@ export interface AddressType {
   country: string;
   city: string;
   state: string;
-  zip: string;
+  pinCode: string;
   streetAddress: string;
 }
 

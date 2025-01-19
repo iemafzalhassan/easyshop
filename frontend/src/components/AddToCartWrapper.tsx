@@ -5,11 +5,10 @@ import {
   removeFromCart,
   setPendingCartItem,
 } from "@/lib/features/cart/cartSlice";
-import { useAppSelector } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaShoppingCart } from "react-icons/fa";
-import { useDispatch } from "react-redux";
 import { Button } from "./ui/button";
 import { Product, CartItem, BaseMongoProduct } from "@/types/product.d";
 import { cn } from "@/lib/utils";
@@ -48,7 +47,7 @@ const AddToCartWrapper = ({
     (state) => state.cart
   );
   const { isAuthenticated, loading: authLoading, currentUser } = useAppSelector((state) => state.auth);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   // Return early if product is undefined
   if (!product?._id) {
@@ -96,23 +95,13 @@ const AddToCartWrapper = ({
       return; // Prevent action while auth state is loading
     }
 
-    // Extract base product fields
-    const baseProduct: BaseMongoProduct = {
-      _id: product._id,
-      name: product.name,
-      price: product.price,
-      oldPrice: product.oldPrice,
-      unit_of_measure: product.unit_of_measure,
-      shop_category: product.shop_category,
-    };
-
     // Create cart item with required fields
     const cartItem: CartItem = {
-      ...baseProduct,
-      image: getProductImage(product),
+      product: product._id, // Set product as the ID string
       quantity: 1,
-      color: selectedColor || undefined,
-      size: selectedSize || undefined,
+      price: product.price,
+      selectedColor: selectedColor || null,
+      selectedSize: selectedSize || null
     };
 
     // For clothing items, require color and size selection

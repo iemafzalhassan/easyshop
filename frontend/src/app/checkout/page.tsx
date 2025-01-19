@@ -46,7 +46,7 @@ const CheckoutPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
-  const { toast } = useToast();
+  const { error: showError } = useToast();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { cartItems } = useSelector((state: RootState) => state.cart);
   const [activeForm, setActiveForm] = useState("shipping");
@@ -81,17 +81,14 @@ const CheckoutPage = () => {
           })
         );
       } catch (error: any) {
-        toast({
-          title: error?.message || "Something went wrong!",
-          variant: "destructive",
-        });
+        showError(error?.message || "Something went wrong!");
       }
     };
 
     if (productId) {
       getProduct();
     }
-  }, [dispatch, searchParams, toast]);
+  }, [dispatch, searchParams, showError]);
 
   return mounted && isAuthenticated ? (
     <AnimatePresence>
@@ -100,40 +97,30 @@ const CheckoutPage = () => {
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="container py-6"
+        className="container py-8 lg:py-12"
       >
-        <div className="flex items-center gap-4 mb-8">
-          <HistoryBackBtn />
-          <h1 className="text-2xl font-bold">Checkout</h1>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <div className="flex items-center gap-4 mb-8">
+        <HistoryBackBtn />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
               {btns.map((btn) => (
                 <Button
                   key={btn.title}
-                  type="button"
                   variant={activeForm === btn.title ? "default" : "outline"}
-                  className={`capitalize ${
-                    activeForm === btn.title
-                      ? "bg-primary text-white hover:bg-primary/90 hover:text-white"
-                      : "hover:text-primary"
-                  }`}
                   onClick={() => setActiveForm(btn.title)}
                 >
                   {btn.title}
                 </Button>
               ))}
             </div>
-
-            {activeForm === "billing" ? (
-              <BillingAddressForm />
-            ) : (
-              <ShippingAddressForm />
-            )}
+            <div>
+              {activeForm === "billing" ? (
+                <BillingAddressForm />
+              ) : (
+                <ShippingAddressForm />
+              )}
+            </div>
           </div>
-
           <OrderSummery />
         </div>
       </motion.div>

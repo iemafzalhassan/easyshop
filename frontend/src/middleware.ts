@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/checkout', '/profile', '/orders'];
+// Protected routes that require authentication
+const protectedRoutes = ['/checkout', '/profile', '/order-confirmation'];
+
+// Auth routes that should redirect to home if already authenticated
 const authRoutes = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
@@ -37,8 +40,9 @@ export function middleware(request: NextRequest) {
   if (protectedRoutes.some(route => pathname.startsWith(route))) {
     if (!isAuthenticated) {
       // Store the attempted URL to redirect back after login
+      const redirectUrl = search ? `${pathname}${search}` : pathname;
       return NextResponse.redirect(
-        new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url)
+        new URL(`/login?redirect=${encodeURIComponent(redirectUrl)}`, request.url)
       );
     }
     // User is authenticated, allow access to protected route
@@ -48,35 +52,15 @@ export function middleware(request: NextRequest) {
   // Handle auth routes (login/register)
   if (authRoutes.includes(pathname)) {
     if (isAuthenticated) {
-      // Get the redirect URL from query params
+      // Get the redirect URL from query params or default to home
       const params = new URLSearchParams(search);
-      const redirectUrl = params.get('redirect');
-      
-      // If there's a redirect URL and it's a protected route, go there
-      if (redirectUrl && protectedRoutes.some(route => redirectUrl.startsWith(route))) {
-        return NextResponse.redirect(new URL(redirectUrl, request.url));
-      }
-      
-      // Otherwise go to home
-      return NextResponse.redirect(new URL('/', request.url));
+      const redirectTo = params.get('redirect') || '/';
+      return NextResponse.redirect(new URL(redirectTo, request.url));
     }
-    // User is not authenticated, allow access to auth routes
     return NextResponse.next();
   }
 
-  // Add CORS headers
-  const response = NextResponse.next();
-  response.headers.set('Access-Control-Allow-Origin', '*');
-  response.headers.set(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, DELETE, OPTIONS'
-  );
-  response.headers.set(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization'
-  );
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
@@ -84,7 +68,7 @@ export const config = {
     '/api/v1/:path*',
     '/checkout/:path*',
     '/profile/:path*',
-    '/orders/:path*',
+    '/order-confirmation/:path*',
     '/login',
     '/register',
   ],

@@ -1,11 +1,10 @@
 "use client";
 
 import { toggleWishlist } from "@/lib/features/cart/cartSlice";
-import { useAppSelector } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { AnimatePresence, Variants, motion } from "framer-motion";
 import { useMemo } from "react";
 import { IoIosHeartEmpty, IoMdHeart } from "react-icons/io";
-import { useDispatch } from "react-redux";
 import { Product } from "@/types/product";
 
 const ContainerVariants: Variants = {
@@ -49,7 +48,7 @@ type AddToWishlistProps = {
 
 const AddToWishlist = ({ product }: AddToWishlistProps) => {
   const { wishlists } = useAppSelector((state) => state.cart);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const isInWishlist = useMemo(
     () => wishlists.some(

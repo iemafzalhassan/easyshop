@@ -6,6 +6,7 @@ import { IoMdSend } from "react-icons/io";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import Logo from "@/assets/Logo";
+import { FaGithub, FaLinkedinIn, FaUserLarge } from "react-icons/fa6";
 
 const Footer = () => {
   return (
@@ -112,7 +113,7 @@ const Footer = () => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Follow Us</h3>
+            <h3 className="text-lg font-semibold">Follow Me</h3>
             <div className="flex gap-4">
               <Link
                 href="https://www.iemafzalhassan.tech/"
@@ -120,10 +121,18 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
               >
-                <FaFacebookF />
+                <FaUserLarge />
               </Link>
               <Link
                 href="https://github.com/iemafzalhassan"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+              >
+                <FaGithub />
+              </Link>
+              <Link
+                href="https://twitter.com/iemafzalhassan"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
@@ -136,7 +145,7 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
               >
-                <FaInstagram />
+                <FaLinkedinIn />
               </Link>
             </div>
           </div>

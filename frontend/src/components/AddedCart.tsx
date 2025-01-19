@@ -12,8 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HiMiniXMark } from "react-icons/hi2";
-import { useDispatch } from "react-redux";
-import { useAppSelector } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { totalPrice } from "@/lib/utils";
 import { BsCartCheckFill } from "react-icons/bs";
 import { Button } from "@/components/ui/button";
@@ -85,12 +84,10 @@ const AddedCart = () => {
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
   const { cartItems, isCartOpen } = useAppSelector((state) => state.cart);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     setIsClient(true);
-
-    return () => {};
   }, []);
 
   const isHidden =
@@ -101,168 +98,132 @@ const AddedCart = () => {
   const reversedItems = [...cartItems].reverse();
 
   return (
-    <>
-      <div
-        className={`${
-          isHidden ? "hidden" : "hidden md:block"
-        } fixed top-1/2 right-0 -translate-y-1/2 bg-secondary p-3 text-sm rounded-lg z-50 cursor-pointer shadow-lg border`}
-        onClick={() => dispatch(handleCartOpen())}
-      >
-        <div className="flex gap-2 items-center">
-          <span className="text-xl">
-            <BsCartCheckFill />
-          </span>
-          <span>Items {isClient ? cartItems.length : 0}</span>
-        </div>
-
-        <div className="price rounded-lg bg-primary px-2 py-1 mt-2 text-center text-white">
-          <p>${isClient ? totalPrice(cartItems) : 0}</p>
-        </div>
-      </div>
-
-      <AnimatePresence mode="wait">
-        {isCartOpen && (
+    <AnimatePresence mode="wait">
+      {isCartOpen && (
+        <motion.div
+          variants={ContainerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          className="card-sidebar fixed top-0 right-0 w-full h-screen z-50 flex justify-end"
+        >
+          <div
+            className="overlay absolute top-0 left-0 w-full h-full bg-black/50"
+            onClick={() => dispatch(handleCartOpen(false))}
+          />
           <motion.div
-            variants={ContainerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            className="card-sidebar fixed top-0 right-0 w-full h-screen z-50 flex justify-end"
+            variants={itemVariants}
+            className="content relative w-full sm:w-[25rem] h-full bg-background overflow-y-auto"
           >
-            <div
-              className="fixed top-0 left-0 w-full h-full bg-black/40"
-              onClick={() => dispatch(handleCartOpen())}
-            ></div>
+            <div className="sticky top-0 flex items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+              <h2 className="text-lg font-medium">Shopping Cart ({cartItems.length})</h2>
+              <button
+                onClick={() => dispatch(handleCartOpen(false))}
+                className="rounded-full hover:bg-accent p-2"
+              >
+                <HiMiniXMark className="h-5 w-5" />
+              </button>
+            </div>
 
-            <motion.div
-              variants={itemVariants}
-              className="w-full sm:max-w-[360px] h-full z-20 relative flex flex-col justify-between bg-secondary"
-            >
-              {/* header */}
-              <div className="flex border-b px-default py-3 justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">
-                    <BsCartCheckFill />
-                  </span>
-                  <span>Item {cartItems.length}</span>
+            <div className="p-4 space-y-4">
+              {reversedItems.map((item) => {
+                const itemColor = colors.find(
+                  (color) => color.name.toLowerCase() === item.selectedColor?.toLowerCase()
+                );
+
+                return (
+                  <motion.div
+                    key={`${item._id}-${item.selectedColor}-${item.selectedSize}`}
+                    variants={itemVariants}
+                    className="flex gap-4 rounded-lg border p-3"
+                  >
+                    <div className="relative aspect-square w-20 overflow-hidden rounded-lg bg-accent">
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <Link
+                        href={`/products/${item._id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {item.title}
+                      </Link>
+
+                      <div className="mt-2 space-y-1 text-sm">
+                        {item.selectedColor && (
+                          <p className="flex items-center gap-2">
+                            Color:{" "}
+                            <span
+                              className="h-4 w-4 rounded-full border"
+                              style={{
+                                backgroundColor: itemColor?.value,
+                              }}
+                            />
+                          </p>
+                        )}
+                        {item.selectedSize && <p>Size: {item.selectedSize}</p>}
+                        <p>Quantity: {item.amount}</p>
+                        <p>Price: ${item.price}</p>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => dispatch(decrementAmount(item._id))}
+                            className="rounded-md border p-1 hover:bg-accent"
+                            disabled={item.amount === 1}
+                          >
+                            -
+                          </button>
+                          <span>{item.amount}</span>
+                          <button
+                            onClick={() => dispatch(incrementAmount(item._id))}
+                            className="rounded-md border p-1 hover:bg-accent"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => dispatch(removeFromCart(item._id))}
+                          className="text-sm text-destructive hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              {cartItems.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Your cart is empty</p>
+                </div>
+              )}
+            </div>
+
+            {cartItems.length > 0 && (
+              <div className="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 space-y-4">
+                <div className="flex items-center justify-between font-medium">
+                  <span>Total:</span>
+                  <span>${totalPrice(cartItems)}</span>
                 </div>
 
-                <Button
-                  type="button"
-                  className="rounded-full h-10 w-10 p-0 text-xl hover:border-primary hover:text-primary"
-                  variant="outline"
-                  onClick={() => dispatch(handleCartOpen())}
-                >
-                  <HiMiniXMark />
+                <Button asChild className="w-full">
+                  <Link href="/checkout">Proceed to Checkout</Link>
                 </Button>
               </div>
-              {/* cart items */}
-              <div className="flex-1 overflow-auto pb-3">
-                <ul className="px-3">
-                  {isClient &&
-                    reversedItems.map((c) => {
-                      const colorImg = colors.find(
-                        (col: Color) =>
-                          col.name.toLowerCase() ===
-                          c.selectedColor?.toLowerCase()
-                      );
-                      return (
-                        <motion.li
-                          variants={item}
-                          layout
-                          className="relative"
-                          key={c._id}
-                        >
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="absolute top-0 right-2 h-7 w-7 p-0 text-base rounded-full hover:text-primary hover:border-primary"
-                            onClick={() => dispatch(removeFromCart(c._id))}
-                          >
-                            <HiMiniXMark />
-                          </Button>
-                          <Link
-                            href={`/products/${c._id}`}
-                            className="flex gap-3 items-center mt-3 p-2 hover:bg-accent rounded-xl overflow-hidden"
-                            onClick={() => dispatch(handleCartOpen())}
-                          >
-                            <div className="flex gap-3 w-full">
-                              <Image
-                                src={c.image}
-                                width={70}
-                                height={70}
-                                alt={c.title}
-                                className="rounded-lg border"
-                              />
-                              <div className="flex-1 flex justify-between gap-4 items-center">
-                                <div className="h-full">
-                                  <h3 className="font-semibold line-clamp-1">
-                                    {c.title}
-                                  </h3>
-                                  <p className="mt-1 flex gap-2 items-center">
-                                    <span className="text-primary">
-                                      ${c.price}
-                                    </span>
-                                    <span>*</span>
-                                    <span>
-                                      {c.amount} {c.unit_of_measure}
-                                    </span>
-                                  </p>
-                                  {(c?.selectedColor || c?.selectedSize) && (
-                                    <div className="flex gap-2 text-sm items-center mt-2">
-                                      <p>
-                                        <strong>Size: </strong>
-                                        <span>{c.selectedSize}</span>
-                                      </p>
-                                      <p
-                                        title={c?.selectedColor}
-                                        className="flex gap-1 items-center"
-                                      >
-                                        <strong>Color: </strong>
-                                        <Image
-                                          src={colorImg?.value || ""}
-                                          alt={colorImg?.name || ""}
-                                          width={20}
-                                          height={20}
-                                          className="rounded-full border bg-gray-600"
-                                        />
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="font-semibold">
-                                  $
-                                  {(Number(c.price) * (c?.amount || 1)).toFixed(
-                                    2
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          </Link>
-                        </motion.li>
-                      );
-                    })}
-                </ul>
-              </div>
-
-              {/* footer */}
-              <div className="px-default pb-3">
-                <Link
-                  href={"/checkout"}
-                  className="rounded-2xl pl-4 pr-1.5 bg-primary w-full flex justify-between items-center py-1.5 font-semibold text-white"
-                  onClick={() => dispatch(handleCartOpen())}
-                >
-                  <span>Checkout</span>
-                  <span className="px-3 py-2 rounded-[12px] bg-white text-black">
-                    ${totalPrice(cartItems)}
-                  </span>
-                </Link>
-              </div>
-            </motion.div>
+            )}
           </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

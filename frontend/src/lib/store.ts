@@ -3,7 +3,7 @@ import cart from "./features/cart/cartSlice";
 import auth from "./features/auth/authSlice";
 import sidebar from "./features/sidebar/sidebarSlice";
 import checkout from "./features/checkout/checkoutSlice";
-import products from "@/store/slices/product-slice";
+import products from "./features/products/productSlice";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 export const makeStore = () => {

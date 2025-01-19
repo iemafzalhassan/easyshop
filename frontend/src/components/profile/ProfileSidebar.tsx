@@ -1,7 +1,8 @@
 "use client";
 
 import { deleteCookies } from "@/app/actions";
-import { setAuthenticated } from "@/lib/features/auth/authSlice";
+import { setAuthenticated, removeCurrentUser } from "@/lib/features/auth/authSlice";
+import { clearCart } from "@/lib/features/cart/cartSlice";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,18 +15,22 @@ const links = [
   {
     title: "Profile",
     url: "/profile",
+    icon: "👤",
   },
   {
     title: "Change Password",
     url: "/profile/change-password",
+    icon: "🔒",
   },
   {
     title: "My Orders",
     url: "/profile/orders",
+    icon: "📦",
   },
   {
     title: "My Wishlists",
     url: "/profile/wishlists",
+    icon: "❤️",
   },
 ];
 
@@ -33,75 +38,85 @@ const ProfileSidebar = () => {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const router = useRouter();
-
   const [isConfirm, setIsConfirm] = useState(false);
 
   const handleLogout = async () => {
-    await deleteCookies("token");
-    dispatch(setAuthenticated(false));
-    setIsConfirm(false);
-    router.push("/");
+    try {
+      await deleteCookies("token");
+      dispatch(removeCurrentUser());
+      dispatch(clearCart());
+      setIsConfirm(false);
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
     <>
-      <div className="p-5">
-        <AnimatePresence>
-          <ul>
-            {links.map((link) => (
-              <li key={link.url} className="relative">
-                <Link
-                  href={link.url}
-                  className={`${
-                    pathname === link.url ? "text-primary" : ""
-                  } py-2 px-4 hover:bg-accent block transition-colors duration-300`}
+      <div className="rounded-lg bg-card shadow-sm transition-all duration-200 hover:shadow-md">
+        <div className="p-4 md:p-6">
+          <AnimatePresence>
+            <ul className="space-y-2">
+              {links.map((link) => (
+                <motion.li
+                  key={link.url}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  {link.title}
-                </Link>
-                {pathname === link.url && (
-                  <motion.div
-                    layout
-                    layoutId="slideline"
-                    transition={{ type: "spring" }}
-                    className="absolute top-0 left-0 w-1 h-full bg-primary rounded-lg"
-                  />
-                )}
-              </li>
-            ))}
-
-            <li className="border-t">
-              <button
-                type="button"
-                className="py-2 px-4 hover:bg-accent block transition-colors duration-300 w-full text-left"
-                onClick={() => setIsConfirm(!isConfirm)}
+                  <Link
+                    href={link.url}
+                    className={`flex items-center gap-3 rounded-md px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                      pathname === link.url
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-lg">{link.icon}</span>
+                    {link.title}
+                  </Link>
+                </motion.li>
+              ))}
+              <motion.li
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
               >
-                Logout
-              </button>
-            </li>
-          </ul>
-        </AnimatePresence>
+                <button
+                  onClick={() => setIsConfirm(true)}
+                  className="flex w-full items-center gap-3 rounded-md px-4 py-2.5 text-sm font-medium text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
+                >
+                  <span className="text-lg">🚪</span>
+                  Logout
+                </button>
+              </motion.li>
+            </ul>
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* logout confirmation */}
-      <Modal
-        isOpen={isConfirm}
-        setIsOpen={setIsConfirm}
-        className="w-fit h-fit"
-      >
-        <div className="p-5 rounded-lg flex flex-col justify-center items-center text-center gap-3">
-          <h2 className="text-lg">Are you sure to logout?</h2>
-          <div className="flex justify-between items-center gap-4">
-            <Button type="button" onClick={() => setIsConfirm(false)}>
-              <span>No</span>
-            </Button>
-
+      {/* Logout Confirmation Modal */}
+      <Modal isOpen={isConfirm} onClose={() => setIsConfirm(false)}>
+        <div className="p-6">
+          <h3 className="mb-4 text-lg font-semibold">Confirm Logout</h3>
+          <p className="mb-6 text-muted-foreground">
+            Are you sure you want to logout? Your cart will be cleared.
+          </p>
+          <div className="flex justify-end gap-4">
             <Button
-              type="button"
               variant="outline"
-              className="border-primary hover:bg-primary hover:text-white"
+              onClick={() => setIsConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleLogout}
             >
-              <span>Ok</span>
+              Logout
             </Button>
           </div>
         </div>

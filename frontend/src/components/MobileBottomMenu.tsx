@@ -1,7 +1,7 @@
 "use client";
 
 import { handleCartOpen } from "@/lib/features/cart/cartSlice";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { BiSearch } from "react-icons/bi";

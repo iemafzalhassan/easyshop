@@ -47,19 +47,26 @@ const config = {
     return config;
   },
   images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'dz3yg2y89.cloudinary.com',
+        pathname: '/**',
+      }
+    ],
     dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    domains: [],
-    remotePatterns: [],
     unoptimized: process.env.NODE_ENV === 'development',
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: 'http://localhost:4000/api/:path*',
+        source: '/api/v1/:path*',
+        destination: 'http://localhost:4000/api/v1/:path*',
       },
     ];
   },

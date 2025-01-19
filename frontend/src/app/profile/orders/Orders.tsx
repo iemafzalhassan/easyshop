@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import OrderDetails from "../../../components/profile/OrderDetails";
-
 import {
   Card,
   CardContent,
@@ -9,9 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CartItem } from "../../../lib/features/cart/cartSlice";
 import { AnimatePresence, Variants, motion } from "framer-motion";
-import { useState } from "react";
+import { orderService, Order as OrderType } from "@/services/order.service";
+import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const ContainerVariants: Variants = {
   hidden: {
@@ -48,331 +51,157 @@ const item: Variants = {
   },
 };
 
-export type Order = {
-  id: string;
-  orderNumber: number;
-  status:
-    | "pending"
-    | "processing"
-    | "at local facility"
-    | "out for delivery"
-    | "completed";
-  orderDate: string;
-  deliveryTime: string;
-  amount: string;
-  total: string | number;
-  shippingAddress: string;
-  billingAddress: string;
-  paymentMethod: string;
-  productItems: CartItem[];
-};
-
-export const orders: Order[] = [
-  {
-    id: "1",
-    status: "pending",
-    orderDate: "Feb 7, 2024",
-    deliveryTime: "express delivery",
-    amount: "15.00",
-    total: "17.00",
-    billingAddress: "123 Main St",
-    orderNumber: 1087348901,
-    paymentMethod: "Cash on delivery",
-    shippingAddress: "123 Main St",
-    productItems: [
-      {
-        _id: "1",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "2",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "3",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-    ],
-  },
-  {
-    id: "2",
-    status: "completed",
-    orderDate: "Feb 7, 2024",
-    deliveryTime: "express delivery",
-    amount: "15.00",
-    total: "17.00",
-    billingAddress: "123 Main St",
-    orderNumber: 1087348901,
-    paymentMethod: "Cash on delivery",
-    shippingAddress: "123 Main St",
-    productItems: [
-      {
-        _id: "1",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "2",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "3",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-    ],
-  },
-  {
-    id: "3",
-    status: "processing",
-    orderDate: "Feb 7, 2024",
-    deliveryTime: "express delivery",
-    amount: "15.00",
-    total: "17.00",
-    billingAddress: "123 Main St",
-    orderNumber: 1087348901,
-    paymentMethod: "Cash on delivery",
-    shippingAddress: "123 Main St",
-    productItems: [
-      {
-        _id: "1",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "2",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "3",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-    ],
-  },
-  {
-    id: "4",
-    status: "completed",
-    orderDate: "Feb 7, 2024",
-    deliveryTime: "express delivery",
-    amount: "15.00",
-    total: "17.00",
-    billingAddress: "123 Main St",
-    orderNumber: 1087348901,
-    paymentMethod: "Cash on delivery",
-    shippingAddress: "123 Main St",
-    productItems: [
-      {
-        _id: "1",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "2",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "3",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-    ],
-  },
-  {
-    id: "5",
-    status: "completed",
-    orderDate: "Feb 7, 2024",
-    deliveryTime: "express delivery",
-    amount: "15.00",
-    total: "17.00",
-    billingAddress: "123 Main St",
-    orderNumber: 1087348901,
-    paymentMethod: "Cash on delivery",
-    shippingAddress: "123 Main St",
-    productItems: [
-      {
-        _id: "1",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "2",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-      {
-        _id: "3",
-        title: "Apples",
-        price: 15.0,
-        image: "/groceryImages/apple.png",
-        shop_category: "Grocery",
-        unit_of_measure: "kg",
-        amount: 1,
-      },
-    ],
-  },
-];
-
 const Orders = () => {
-  const [activeOrder, setActiveOrder] = useState(orders[0]);
+  const [orders, setOrders] = useState<OrderType[]>([]);
+  const [activeOrder, setActiveOrder] = useState<OrderType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const handleOrderClick = (order: Order) => {
-    setActiveOrder(order);
-  };
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await orderService.getOrders();
+        if (response?.data?.orders) {
+          setOrders(response.data.orders);
+          if (response.data.orders.length > 0) {
+            setActiveOrder(response.data.orders[0]);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error fetching orders:', error);
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || "Failed to fetch orders",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <Card className="max-w-3xl mx-auto mt-8">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">No Orders Found</h2>
+            <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <AnimatePresence>
-      <motion.section
+    <AnimatePresence mode="wait">
+      <motion.div
         variants={ContainerVariants}
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="order-page w-full"
+        className="w-full"
       >
-        <motion.h1 variants={item} className="font-medium text-2xl">
-          My Orders
-        </motion.h1>
-
-        <div className="flex gap-4 overflow-auto narrowScrollbar mt-5 w-full pb-3 pr-3">
+        <div className="flex flex-col gap-4">
           {orders.map((order) => (
             <motion.div
-              key={order.id}
+              key={order._id}
               variants={item}
-              className="min-w-fit cursor-pointer"
+              className="w-full"
+              onClick={() => setActiveOrder(order)}
             >
-              <Card
-                key={order.id}
-                className={`${
-                  order.id === activeOrder.id ? "border-primary" : ""
-                }`}
-                onClick={() => handleOrderClick(order)}
-              >
-                <CardHeader className="flex justify-between w-full gap-6 items-center flex-row border-b py-2.5">
-                  <CardTitle className="text-lg">
-                    Order: <span className="font-normal">#{order.id}</span>
+              <Card className={`cursor-pointer transition-all duration-200 ${
+                activeOrder?._id === order._id ? 'border-primary' : ''
+              }`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    <span>Order #{order._id}</span>
+                    <span className="text-sm font-normal">
+                      {format(new Date(order.createdAt), 'MMM d, yyyy')}
+                    </span>
                   </CardTitle>
-
-                  <div
-                    className={`${
-                      order.status === "completed"
-                        ? "bg-green-200 text-green-600"
-                        : "bg-yellow-200 text-yellow-600"
-                    } rounded-lg py-1 px-2 capitalize text-sm`}
-                  >
-                    {order.status}
-                  </div>
-                  {/* <CardDescription>Card Description</CardDescription> */}
                 </CardHeader>
-                <CardContent className="mt-6 text-sm">
-                  <div className="flex justify-between gap-2 w-full">
-                    <p className="flex justify-between items-center min-w-24">
-                      <span>Order Date</span>
-                      <span>:</span>
-                    </p>
-                    <p className="text-muted-foreground self-end">
-                      {order.orderDate}
-                    </p>
-                  </div>
-
-                  <div className="flex justify-between mt-2 gap-2 w-full">
-                    <p className="flex justify-between items-center min-w-24">
-                      <span>Delivery Time</span>
-                      <span>:</span>
-                    </p>
-                    <p className="text-muted-foreground self-end">
-                      {order.deliveryTime}
-                    </p>
+                <CardContent>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Status</span>
+                      <span className="capitalize font-medium">{order.status}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Total Amount</span>
+                      <span className="font-medium">{formatCurrency(order.totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Payment Method</span>
+                      <span className="capitalize">{order.paymentMethod}</span>
+                    </div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex-col items-start text-sm border-t">
-                  <div className="flex justify-between mt-2 gap-2 w-full">
-                    <p className="flex justify-between items-center min-w-24">
-                      <span className="font-medium">Amount</span>
-                      <span>:</span>
-                    </p>
-                    <p className="text-muted-foreground self-end">
-                      ${order.amount}
-                    </p>
-                  </div>
-                  <div className="flex justify-between mt-2 gap-2 w-full">
-                    <p className="flex justify-between items-center min-w-24">
-                      <span className="font-medium">Total Price</span>
-                      <span>:</span>
-                    </p>
-                    <p className="text-muted-foreground self-end">
-                      ${order.total}
-                    </p>
-                  </div>
-                </CardFooter>
               </Card>
             </motion.div>
           ))}
         </div>
 
-        <OrderDetails orderId={activeOrder.id} />
-      </motion.section>
+        {activeOrder && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Order Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold mb-2">Shipping Address</h3>
+                  <div className="p-4 border rounded-md">
+                    <p>{activeOrder.shippingAddress.street}</p>
+                    <p>{activeOrder.shippingAddress.city}, {activeOrder.shippingAddress.state}</p>
+                    <p>{activeOrder.shippingAddress.country}, {activeOrder.shippingAddress.zipCode}</p>
+                    <p>Phone: {activeOrder.shippingAddress.phone}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Order Summary</h3>
+                  <div className="space-y-4">
+                    {activeOrder.items.map((item, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div className="flex-1">
+                          <span className="font-medium">
+                            {typeof item.product === 'string' ? item.product : item.product.name}
+                          </span>
+                        </div>
+                        <div className="flex gap-4 text-sm text-gray-600">
+                          <span>Qty: {item.quantity}</span>
+                          <span>{formatCurrency(item.price)}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between font-semibold">
+                        <span>Total Amount</span>
+                        <span>{formatCurrency(activeOrder.totalAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-600 mt-1">
+                        <span>Payment Method</span>
+                        <span className="capitalize">{activeOrder.paymentMethod}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </motion.div>
     </AnimatePresence>
   );
 };

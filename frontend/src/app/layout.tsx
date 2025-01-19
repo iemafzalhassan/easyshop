@@ -8,6 +8,7 @@ import AddedCart from "@/components/AddedCart";
 import MobileBottomMenu from "@/components/MobileBottomMenu";
 import { Toaster } from "@/components/ui/toaster";
 import ScrollToTopBtn from "@/components/ScrollToTopBtn";
+import CartInitializer from "@/components/cart/CartInitializer";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -22,14 +23,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={roboto.className}>
         <Providers>
           <div className="flex min-h-screen flex-col">
+            <CartInitializer />
             <header>
               <Navbar />
             </header>

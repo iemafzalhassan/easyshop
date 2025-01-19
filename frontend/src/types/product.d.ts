@@ -10,12 +10,14 @@ export interface BaseMongoProduct {
 
 // Product interface from backend
 export interface Product extends BaseMongoProduct {
+  title?: string; // Optional display title
   description?: string;
   category?: string;
   categories?: string[];
   image: string | string[];
+  imageUrl?: string; // URL from backend
   stock?: number;
-  shop?: string;
+  shop?: string | { _id: string; name: string };
   rating?: number;
   featured?: boolean;
   colors?: string[];
@@ -29,18 +31,21 @@ export interface Product extends BaseMongoProduct {
 }
 
 // Cart item interface
-export interface CartItem extends BaseMongoProduct {
-  image: string; // Cart items always have a single image
+export interface CartItem {
+  product: string | Product;
   quantity: number;
-  color?: string;
-  size?: string;
+  price: number;
+  selectedColor?: string | null;
+  selectedSize?: string | null;
+  _id?: string;
 }
 
 // Product display interface (used in UI components)
 export interface ProductDisplay extends BaseMongoProduct {
   title?: string; // Optional display title
   image: string | string[]; // Can be single image or array
+  imageUrl?: string; // URL from backend
 }
 
 // Re-export AllProduct for backward compatibility
-export type AllProduct = ProductDisplay;
+export type AllProduct = Product;

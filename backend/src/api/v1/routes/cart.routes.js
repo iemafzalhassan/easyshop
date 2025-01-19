@@ -3,14 +3,16 @@ const { auth } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validator.middleware');
 const { 
     addToCartValidator,
-    updateCartItemValidator
+    updateCartItemValidator,
+    syncCartValidator
 } = require('../validators/cart.validator');
 const {
     getCart,
     addToCart,
     updateCartItem,
     removeFromCart,
-    clearCart
+    clearCart,
+    syncCart
 } = require('../controllers/cart.controller');
 
 const router = express.Router();
@@ -23,6 +25,10 @@ router
     .get(getCart)
     .post(validate(addToCartValidator), addToCart)
     .delete(clearCart);
+
+router
+    .route('/sync')
+    .post(validate(syncCartValidator), syncCart);
 
 router
     .route('/:itemId')

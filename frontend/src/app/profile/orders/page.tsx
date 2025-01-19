@@ -3,13 +3,17 @@ import Orders from "./Orders";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "My Orders",
-  description:
-    "EasyShop is the user-friendly Next.js eCommerce template perfect for launching your online store. With its clean design and customizable options, EasyShop makes selling online a breeze. Start building your dream store today and boost your online presence effortlessly!",
+  title: "My Orders - EasyShop",
+  description: "View and track all your orders from EasyShop.",
 };
 
 const OrderPage = () => {
-  return <Orders />;
+  return (
+    <div className="container py-6">
+      <h1 className="text-2xl font-semibold mb-6">My Orders</h1>
+      <Orders />
+    </div>
+  );
 };
 
 export default OrderPage;

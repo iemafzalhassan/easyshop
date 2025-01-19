@@ -4,7 +4,7 @@ export interface ShippingAddress {
   street: string;
   city: string;
   state: string;
-  pinCode: string;
+  zipCode: string;
   country: string;
   phone: string;
 }
@@ -14,8 +14,14 @@ export interface PaymentInfo {
 }
 
 export interface CreateOrderData {
+  items: Array<{
+    product: string;
+    quantity: number;
+    price: number;
+  }>;
   shippingAddress: ShippingAddress;
-  paymentInfo: PaymentInfo;
+  billingAddress: ShippingAddress;
+  paymentMethod: 'card' | 'upi' | 'netbanking' | 'cod';
   totalAmount: number;
 }
 
@@ -28,37 +34,39 @@ export interface Order {
     price: number;
   }>;
   shippingAddress: ShippingAddress;
-  paymentInfo: PaymentInfo;
+  paymentMethod: string;
   totalAmount: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }
 
-export const orderService = {
+class OrderService {
   async createOrder(data: CreateOrderData) {
     console.log('Creating order with data:', data);
     const response = await api.post('/orders', data);
     return response.data;
-  },
+  }
 
   async getOrders() {
     const response = await api.get('/orders');
     return response.data;
-  },
+  }
 
   async getOrderById(id: string) {
     const response = await api.get(`/orders/${id}`);
     return response.data;
-  },
+  }
 
   async updateOrderStatus(id: string, status: Order['status']) {
     const response = await api.patch(`/orders/${id}/status`, { status });
     return response.data;
-  },
+  }
 
   async cancelOrder(id: string) {
-    const response = await api.delete(`/orders/${id}`);
+    const response = await api.patch(`/orders/${id}/cancel`);
     return response.data;
   }
-};
+}
+
+export const orderService = new OrderService();
