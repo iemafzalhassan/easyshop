@@ -1,8 +1,6 @@
 {
   "/page": "app/page.js",
+  "/icon.svg/route": "app/icon.svg/route.js",
   "/not-found": "app/not-found.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/checkout/page": "app/checkout/page.js",
-  "/order-confirmation/page": "app/order-confirmation/page.js",
-  "/profile/orders/page": "app/profile/orders/page.js"
+  "/(auth)/login/page": "app/(auth)/login/page.js"
 }

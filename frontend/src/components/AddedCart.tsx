@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { HiMiniXMark } from "react-icons/hi2";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { totalPrice } from "@/lib/utils";
+import { formatPrice } from "@/utils/format";
 import { BsCartCheckFill } from "react-icons/bs";
 import { Button } from "@/components/ui/button";
 import { colors } from "@/data/colors";
@@ -168,7 +169,7 @@ const AddedCart = () => {
                         )}
                         {item.selectedSize && <p>Size: {item.selectedSize}</p>}
                         <p>Quantity: {item.amount}</p>
-                        <p>Price: ${item.price}</p>
+                        <p>Price: {formatPrice(item.price)}</p>
                       </div>
 
                       <div className="mt-4 flex items-center justify-between">
@@ -212,7 +213,7 @@ const AddedCart = () => {
               <div className="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 space-y-4">
                 <div className="flex items-center justify-between font-medium">
                   <span>Total:</span>
-                  <span>${totalPrice(cartItems)}</span>
+                  <span>{formatPrice(totalPrice(cartItems))}</span>
                 </div>
 
                 <Button asChild className="w-full">

@@ -138,30 +138,40 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     initializeCart(state, action: PayloadAction<string | undefined>) {
-      const items = loadCartFromStorage(action.payload);
-      state.cartItems = items;
-      state.wishlists = loadWishlistFromStorage(action.payload);
+      const userId = action.payload;
+      state.cartItems = loadCartFromStorage(userId);
+      state.wishlists = loadWishlistFromStorage(userId);
+      
+      // Check for pending items if user just logged in
+      if (typeof window !== 'undefined') {
+        const pendingItems = localStorage.getItem('pendingCartItems');
+        if (pendingItems) {
+          try {
+            const items = JSON.parse(pendingItems);
+            state.cartItems = [...state.cartItems, ...items];
+            localStorage.removeItem('pendingCartItems');
+          } catch (error) {
+            console.error('Error parsing pending cart items:', error);
+          }
+        }
+      }
+      
       state.isInitialized = true;
     },
     addToCart(state, action: PayloadAction<CartItem>) {
-      const existingItem = state.cartItems.find(
-        item => 
-          (typeof item.product === 'string' ? item.product : item.product._id) === 
-          (typeof action.payload.product === 'string' ? action.payload.product : action.payload.product._id)
+      const newItem = action.payload;
+      const existingItemIndex = state.cartItems.findIndex(
+        item => item.product === newItem.product
       );
 
-      if (existingItem) {
-        const newQuantity = existingItem.quantity + action.payload.quantity;
-        if (newQuantity <= 5) {
-          existingItem.quantity = newQuantity;
-          existingItem.selectedColor = action.payload.selectedColor || existingItem.selectedColor;
-          existingItem.selectedSize = action.payload.selectedSize || existingItem.selectedSize;
-        }
+      if (existingItemIndex >= 0) {
+        // Update quantity if item exists
+        state.cartItems[existingItemIndex].quantity += newItem.quantity;
       } else {
-        if (action.payload.quantity <= 5) {
-          state.cartItems.push(action.payload);
-        }
+        // Add new item
+        state.cartItems.push(newItem);
       }
+
       saveCartToStorage(state.cartItems);
     },
     removeFromCart(state, action: PayloadAction<string>) {
@@ -196,6 +206,13 @@ const cartSlice = createSlice({
     },
     setPendingCartItem(state, action: PayloadAction<CartItem | null>) {
       state.pendingCartItem = action.payload;
+      
+      if (action.payload) {
+        // Also update localStorage
+        const pendingItems = JSON.parse(localStorage.getItem('pendingCartItems') || '[]');
+        pendingItems.push(action.payload);
+        localStorage.setItem('pendingCartItems', JSON.stringify(pendingItems));
+      }
     },
     incrementAmount(state, action: PayloadAction<string>) {
       const item = state.cartItems.find(
@@ -257,14 +274,18 @@ const cartSlice = createSlice({
       })
       .addCase(syncCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.cartItems = action.payload.items.map((item: CartItem) => ({
-          product: item.product,
-          quantity: item.quantity,
-          price: item.price, // Price in INR
-          selectedColor: item.selectedColor || null,
-          selectedSize: item.selectedSize || null
-        }));
-        saveCartToStorage(state.cartItems);
+        if (action.payload?.cart?.items) {
+          state.cartItems = action.payload.cart.items.map((item: any) => ({
+            product: item.product,
+            quantity: item.quantity,
+            price: item.price,
+            selectedColor: item.selectedColor || null,
+            selectedSize: item.selectedSize || null
+          }));
+          saveCartToStorage(state.cartItems);
+        } else {
+          state.cartItems = [];
+        }
       })
       .addCase(syncCart.rejected, (state, action) => {
         state.loading = false;
@@ -278,15 +299,20 @@ const cartSlice = createSlice({
         state.error = null;
         state.orderStatus = 'pending';
       })
-      .addCase(placeOrder.fulfilled, (state) => {
+      .addCase(placeOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.cartItems = [];
-        clearCartFromStorage();
-        state.orderStatus = 'success';
+        if (action.payload?.status === 'success') {
+          state.cartItems = [];
+          clearCartFromStorage();
+          state.orderStatus = 'success';
+        } else {
+          state.error = 'Failed to place order';
+          state.orderStatus = 'failed';
+        }
       })
       .addCase(placeOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload as string || 'Failed to place order';
         state.orderStatus = 'failed';
       });
   },

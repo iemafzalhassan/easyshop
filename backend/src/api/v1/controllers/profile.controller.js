@@ -2,7 +2,8 @@ const User = require('../models/user.model');
 const Product = require('../models/product.model');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinary');
+const path = require('path');
+const fs = require('fs').promises;
 
 exports.getProfile = catchAsync(async (req, res) => {
     const user = await User.findById(req.user._id)
@@ -48,33 +49,55 @@ exports.updateAvatar = catchAsync(async (req, res) => {
     }
 
     const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
 
     try {
-        // Upload new avatar first
-        const result = await uploadToCloudinary(req.file.path, 'avatars');
+        // Create uploads directory if it doesn't exist
+        const uploadsDir = path.join(__dirname, '../../../uploads');
+        await fs.mkdir(uploadsDir, { recursive: true });
 
-        // If upload successful, delete old avatar
-        if (user.avatar) {
-            await deleteFromCloudinary(user.avatar).catch(error => {
+        // Generate unique filename
+        const ext = path.extname(req.file.originalname);
+        const filename = `avatar-${user._id}${ext}`;
+        const avatarPath = path.join(uploadsDir, filename);
+
+        // Move file from temp upload location to permanent storage
+        await fs.rename(req.file.path, avatarPath);
+
+        // Delete old avatar if it exists and isn't the default
+        if (user.avatar && !user.avatar.includes('default-avatar')) {
+            const oldAvatarPath = path.join(uploadsDir, path.basename(user.avatar));
+            try {
+                await fs.unlink(oldAvatarPath);
+            } catch (error) {
                 console.error('Error deleting old avatar:', error);
                 // Don't throw error if deleting old avatar fails
-            });
+            }
         }
 
-        // Update user avatar
-        user.avatar = result.secure_url;
+        // Update user avatar with relative path
+        user.avatar = `/uploads/${filename}`;
         await user.save();
+
+        // Return updated user without password
+        const updatedUser = user.toObject();
+        delete updatedUser.password;
 
         res.status(200).json({
             status: 'success',
-            data: {
-                user: {
-                    ...user.toObject(),
-                    password: undefined
-                }
-            }
+            data: { user: updatedUser }
         });
     } catch (error) {
+        // If there's an error, make sure to clean up any uploaded file
+        if (req.file && req.file.path) {
+            try {
+                await fs.unlink(req.file.path);
+            } catch (unlinkError) {
+                console.error('Error deleting uploaded file:', unlinkError);
+            }
+        }
         throw new AppError(error.message || 'Error updating avatar', error.statusCode || 500);
     }
 });

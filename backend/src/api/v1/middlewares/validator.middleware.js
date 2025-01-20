@@ -12,7 +12,8 @@ exports.validate = (validations) => {
             if (!errors.isEmpty()) {
                 // Group errors by field for better readability
                 const groupedErrors = errors.array().reduce((acc, err) => {
-                    const field = err.param.split('.').pop();
+                    // Handle nested fields safely
+                    const field = err.path || err.param || 'general';
                     if (!acc[field]) {
                         acc[field] = [];
                     }

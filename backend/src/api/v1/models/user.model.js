@@ -89,10 +89,21 @@ userSchema.methods.comparePassword = async function(enteredPassword) {
 
 // Generate JWT token
 userSchema.methods.generateAuthToken = function() {
+  const payload = {
+    userId: this._id,
+    role: this.role,
+    timestamp: Date.now()
+  };
+
+  // Only include version if tokenVersion exists
+  if (this.tokenVersion !== undefined) {
+    payload.version = this.tokenVersion;
+  }
+
   return jwt.sign(
-    { id: this._id, version: this.tokenVersion },
+    payload,
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE }
+    { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
 };
 

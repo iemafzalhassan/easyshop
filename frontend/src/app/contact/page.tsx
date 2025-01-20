@@ -1,7 +1,7 @@
 import ContactForm from "@/components/forms/ContactForm";
 import { Button } from "@/components/ui/button";
 import { Metadata } from "next";
-import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
+import { FaGithub, FaLinkedinIn, FaTwitter, FaUserLarge } from "react-icons/fa6";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -25,39 +25,47 @@ const ContactPage = () => {
 
           <div className="mt-4">
             <h4 className="font-semibold mb-1">Phone</h4>
-            <p className="text-sm text-muted-foreground">+91 9999999999</p>
+            <p className="text-sm text-muted-foreground">+91 94******95</p>
           </div>
 
           <div className="mt-4">
             <h4 className="font-semibold mb-1">Email Address</h4>
-            <p className="text-sm text-muted-foreground">demo@gmail.com</p>
+            <p className="text-sm text-muted-foreground">iemafzalhassan@gmail.com</p>
           </div>
           <div className="mt-4">
-            <h3 className="font-semibold">Follow Us</h3>
+            <h3 className="font-semibold">Follow Me</h3>
             <div className="flex flex-wrap gap-3 items-center mt-4">
-              <Link href="https://github.com/iemafzalhassan" passHref>
-                <Button
-                  variant="outline"
-                  className="rounded-full h-10 w-10 hover:bg-primary hover:text-white p-0"
-                >
-                  <FaFacebookF />
-                </Button>
+              <Link
+                href="https://www.iemafzalhassan.tech/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+              >
+                <FaUserLarge className="w-5 h-5" />
               </Link>
-              <Link href="https://twitter.com/iemafzalhassan" passHref>
-                <Button
-                  variant="outline"
-                  className="rounded-full h-10 w-10 hover:bg-primary hover:text-white p-0"
-                >
-                  <FaTwitter />
-                </Button>
+              <Link
+                href="https://github.com/iemafzalhassan"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+              >
+                <FaGithub className="w-5 h-5" />
               </Link>
-              <Link href="https://github.com/iemafzalhassan" passHref>
-                <Button
-                  variant="outline"
-                  className="rounded-full h-10 w-10 hover:bg-primary hover:text-white p-0"
-                >
-                  <FaInstagram />
-                </Button>
+              <Link
+                href="https://twitter.com/iemafzalhassan"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+              >
+                <FaTwitter className="w-5 h-5" />
+              </Link>
+              <Link
+                href="https://www.linkedin.com/in/iemafzalhassan/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+              >
+                <FaLinkedinIn className="w-5 h-5" />
               </Link>
             </div>
           </div>

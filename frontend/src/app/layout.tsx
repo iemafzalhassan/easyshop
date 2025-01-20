@@ -19,6 +19,39 @@ export const metadata: Metadata = {
   title: "EasyShop - Next.js E-commerce Template",
   description:
     "EasyShop is the user-friendly and 100% SEO friendly Next.js eCommerce template perfect for launching your online store. With its clean design and customizable options, EasyShop makes selling online a breeze. Start building your dream store today and boost your online presence effortlessly!",
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png' },
+    ],
+  },
+  manifest: '/site.webmanifest',
+  themeColor: '#ffffff',
+  viewport: 'width=device-width, initial-scale=1.0',
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: 'EasyShop - Iemafzalhassan',
+    description: 'Your one-stop shop for all your shopping needs',
+    url: 'https://easyshop.com',
+    siteName: 'EasyShop',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'EasyShop Preview',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
@@ -28,6 +61,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+      </head>
       <body className={roboto.className}>
         <Providers>
           <div className="flex min-h-screen flex-col">

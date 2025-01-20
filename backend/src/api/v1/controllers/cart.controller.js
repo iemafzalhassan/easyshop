@@ -203,57 +203,60 @@ exports.clearCart = catchAsync(async (req, res) => {
 
 exports.syncCart = catchAsync(async (req, res) => {
     const { items } = req.body;
-    
+
     if (!Array.isArray(items)) {
         throw new AppError('Items must be an array', 400);
     }
 
-    // Validate products and collect data
-    const productsMap = new Map();
-    const validatedItems = [];
-
-    // First, get all products in one query
-    const productIds = [...new Set(items.map(item => item.productId))];
+    // Extract unique product IDs
+    const productIds = [...new Set(items.map(item => item.product))];
+    
+    // Find all products in one query
     const products = await Product.find({ _id: { $in: productIds } });
-    products.forEach(product => productsMap.set(product._id.toString(), product));
+    const productMap = products.reduce((acc, product) => {
+        acc[product._id.toString()] = product;
+        return acc;
+    }, {});
 
-    // Validate items
-    for (const item of items) {
-        const { productId, quantity, color, size } = item;
-        
-        if (quantity > MAX_QUANTITY_PER_ITEM) {
-            throw new AppError(`Maximum quantity allowed per item is ${MAX_QUANTITY_PER_ITEM}`, 400);
-        }
-
-        const product = productsMap.get(productId);
-        if (!product) {
-            throw new AppError(`Product with ID ${productId} not found`, 404);
-        }
-
-        if (product.stock < quantity) {
-            throw new AppError(`Only ${product.stock} items available for ${product.name}`, 400);
-        }
-
-        validatedItems.push({
-            product: productId,
-            quantity,
-            color: color || null,
-            size: size || null,
-            price: product.price
-        });
+    // Find missing products
+    const missingProducts = productIds.filter(id => !productMap[id]);
+    if (missingProducts.length > 0) {
+        throw new AppError(`Products not found: ${missingProducts.join(', ')}`, 400);
     }
+
+    // Validate quantities and create final cart items
+    const validatedItems = items.map(item => {
+        const product = productMap[item.product];
+        
+        // Validate quantity
+        const quantity = Math.min(
+            Math.max(1, item.quantity), // Ensure minimum of 1
+            Math.min(product.stock || Infinity, MAX_QUANTITY_PER_ITEM || 10) // Respect both stock and max limits
+        );
+
+        return {
+            product: item.product,
+            quantity,
+            selectedColor: item.selectedColor || null,
+            selectedSize: item.selectedSize || null,
+            price: product.price
+        };
+    });
 
     const result = await retryOperation(async () => {
         let cart = await Cart.findOne({ user: req.user._id });
         
         if (!cart) {
-            cart = new Cart({ user: req.user._id });
+            cart = await Cart.create({
+                user: req.user._id,
+                items: validatedItems
+            });
+        } else {
+            cart.items = validatedItems;
+            await cart.save();
         }
 
-        cart.items = validatedItems;
-        await cart.save();
-        await cart.populate('items.product', 'name price images stock');
-        return cart;
+        return cart.populate('items.product', 'name price images stock');
     });
 
     res.status(200).json({

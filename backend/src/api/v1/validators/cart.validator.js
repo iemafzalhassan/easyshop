@@ -21,7 +21,7 @@ exports.syncCartValidator = [
     body('items')
         .isArray()
         .withMessage('Items must be an array'),
-    body('items.*.productId')
+    body('items.*.product')
         .notEmpty()
         .withMessage('Product ID is required')
         .isMongoId()
@@ -29,12 +29,16 @@ exports.syncCartValidator = [
     body('items.*.quantity')
         .isInt({ min: 1 })
         .withMessage('Quantity must be at least 1'),
-    body('items.*.color')
+    body('items.*.selectedColor')
         .optional({ nullable: true })
         .isString()
         .withMessage('Color must be a string if provided'),
-    body('items.*.size')
+    body('items.*.selectedSize')
         .optional({ nullable: true })
         .isString()
-        .withMessage('Size must be a string if provided')
+        .withMessage('Size must be a string if provided'),
+    body('items.*.price')
+        .optional()
+        .isNumeric()
+        .withMessage('Price must be a number')
 ];

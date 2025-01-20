@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AddToCartWrapper from "@/components/AddToCartWrapper";
 import { discountPercent } from "@/lib/utils";
+import { formatPrice } from "@/utils/format";
 import { TbCurrencyTaka } from "react-icons/tb";
 
 const CardThree = ({
@@ -45,9 +46,9 @@ const CardThree = ({
       </Link>
       <div className="flex flex-col gap-2.5 justify-between mt-2">
         <p className="flex gap-2 items-end">
-          <span className="">${price.toFixed(2)}</span>
+          <span className="">{formatPrice(price)}</span>
           {oldPrice && (
-            <del className="text-sm text-gray-400">${oldPrice.toFixed(2)}</del>
+            <del className="text-sm text-gray-400">{formatPrice(oldPrice)}</del>
           )}
         </p>
         <AddToCartWrapper

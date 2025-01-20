@@ -45,29 +45,48 @@ export const useAuth = () => {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
+      // Always clear auth state
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       delete api.defaults.headers.common['Authorization'];
       dispatch(removeCurrentUser());
+      
+      // Redirect to login
+      window.location.href = '/login';
       dispatch(setLoading(false));
     }
   };
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      dispatch(removeCurrentUser());
-      return;
-    }
-
     try {
+      // Only check if we think we're authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        dispatch(removeCurrentUser());
+        return null;
+      }
+
       dispatch(setLoading(true));
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      const response = await api.get('/auth/me');
-      dispatch(setCurrentUser(response.data.user));
-    } catch (err) {
+      const response = await api.get('/auth/check');
+      
+      if (response.data?.user) {
+        dispatch(setCurrentUser(response.data.user));
+        return response.data.user;
+      } else {
+        // Clear auth state if no user data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        delete api.defaults.headers.common['Authorization'];
+        dispatch(removeCurrentUser());
+        return null;
+      }
+    } catch (error: any) {
+      // Clear auth state on any auth check error
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       delete api.defaults.headers.common['Authorization'];
       dispatch(removeCurrentUser());
+      return null;
     } finally {
       dispatch(setLoading(false));
     }

@@ -10,14 +10,21 @@ class AuthService {
   }
 
   static generateToken(userId, tokenVersion) {
+    const payload = {
+      userId,
+      timestamp: Date.now()
+    };
+
+    // Only include version if it's provided
+    if (tokenVersion !== undefined) {
+      payload.version = tokenVersion;
+    }
+
     return jwt.sign(
-      { 
-        userId,
-        version: tokenVersion 
-      },
+      payload,
       process.env.JWT_SECRET,
       { 
-        expiresIn: '7d', // Token expires in 7 days
+        expiresIn: process.env.JWT_EXPIRE || '7d',
         algorithm: 'HS256'
       }
     );

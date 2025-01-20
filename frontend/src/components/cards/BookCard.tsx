@@ -2,6 +2,7 @@ import Image from "next/image";
 import React from "react";
 import AddToCartWrapper from "@/components/AddToCartWrapper";
 import Link from "next/link";
+import { formatPrice } from "@/utils/format";
 
 const BookCard = ({
   _id,
@@ -38,10 +39,10 @@ const BookCard = ({
 
       <div className="flex gap-2 items-center justify-between mt-1 flex-wrap">
         <p className="flex gap-2 items-end font-semibold text-lg">
-          <span>${price.toFixed(2)}</span>
+          <span>{formatPrice(price)}</span>
           {oldPrice && (
             <del className="text-sm text-muted-foreground">
-              ${oldPrice.toFixed(2)}
+              {formatPrice(oldPrice)}
             </del>
           )}
         </p>

@@ -3,7 +3,7 @@
 import NoProductFound from "@/components/NoProductFound";
 import Paginations from "@/components/Paginations";
 import ProductCard from "@/components/cards/ProductCard";
-import { useToast } from "@/lib/hooks/useToast";
+import { useToast } from "@/hooks/useToast";
 import { useCallback, useEffect, useMemo } from "react";
 import { api } from "@/services/api";
 import { SearchParamsType } from "@/types/searchParams";

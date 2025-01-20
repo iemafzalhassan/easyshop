@@ -50,8 +50,9 @@ const links = [
         url: "/contact",
       },
       {
-        title: "About Us",
-        url: "/about",
+        title: "About Me",
+        url: "https://iemafzalhassan.tech",
+        external: true
       },
     ],
   },
@@ -120,6 +121,8 @@ const Navbar = () => {
                       <Link
                         key={subIndex}
                         href={subLink.url}
+                        target={subLink.external ? "_blank" : undefined}
+                        rel={subLink.external ? "noopener noreferrer" : undefined}
                         className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         {subLink.title}
@@ -163,13 +166,15 @@ const Navbar = () => {
               <Button
                 variant="ghost"
                 asChild
+                onClick={() => router.push('/login')}
               >
-                <Link href="/login">Login</Link>
+                <Link href="/login" className="hover:no-underline">Login</Link>
               </Button>
               <Button
                 asChild
+                onClick={() => router.push('/register')}
               >
-                <Link href="/register">Sign up</Link>
+                <Link href="/register" className="hover:no-underline">Sign up</Link>
               </Button>
             </>
           )}

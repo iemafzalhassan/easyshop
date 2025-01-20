@@ -5,6 +5,7 @@ import Link from "next/link";
 import AddToCartWrapper from "@/components/AddToCartWrapper";
 import AddToWishlist from "@/components/AddToWishlist";
 import { TbCurrencyTaka } from "react-icons/tb";
+import { formatPrice } from "@/utils/format";
 
 const WishlistCard = (props: AllProduct) => {
   const { _id, title, price, image, oldPrice, unit_of_measure, shop_category } =
@@ -36,8 +37,8 @@ const WishlistCard = (props: AllProduct) => {
       </Link>
       <div className="flex justify-between items-center flex-wrap  gap-3">
         <p className="flex gap-2 items-end">
-          <span className="">${price}</span>
-          {oldPrice && <del className="text-sm text-gray-400">${oldPrice}</del>}
+          <span className="">{formatPrice(price)}</span>
+          {oldPrice && <del className="text-sm text-gray-400">{formatPrice(oldPrice)}</del>}
         </p>
         <AddToCartWrapper
           btnStyle="style-4"

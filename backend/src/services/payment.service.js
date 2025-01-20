@@ -1,5 +1,10 @@
+require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const AppError = require('../api/v1/utils/AppError');
+
+if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+}
 
 class PaymentService {
     async createPaymentIntent(amount, currency = 'inr', paymentMethodTypes = ['card']) {

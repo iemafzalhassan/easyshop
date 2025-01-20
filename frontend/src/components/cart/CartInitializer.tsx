@@ -19,7 +19,10 @@ const CartInitializer = () => {
   useEffect(() => {
     const initCart = async () => {
       if (!isInitialized) {
-        if (isAuthenticated && currentUser?._id) {
+        // Check if we have a token before trying to fetch cart
+        const token = localStorage.getItem('token');
+        
+        if (token && isAuthenticated && currentUser?._id) {
           try {
             // Fetch cart from server for authenticated users
             await dispatch(fetchCart());
@@ -41,10 +44,17 @@ const CartInitializer = () => {
   // Handle cart cleanup on logout
   useEffect(() => {
     if (!isAuthenticated && cartItems.length > 0) {
+      // Save cart items to local storage before clearing
+      const localCart = cartItems.map(item => ({
+        ...item,
+        userId: undefined
+      }));
+      localStorage.setItem('cart', JSON.stringify(localCart));
+      
       dispatch(clearCart());
       router.push("/");
     }
-  }, [isAuthenticated, cartItems.length, dispatch, router]);
+  }, [isAuthenticated, cartItems, dispatch, router]);
 
   return null;
 };

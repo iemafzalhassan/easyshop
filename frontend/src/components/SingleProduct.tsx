@@ -23,8 +23,12 @@ type SingleProductProps = {
 const OPTIONS: EmblaOptionsType = {};
 
 const formatPrice = (price: number | undefined | null): string => {
-  if (typeof price !== 'number') return '$0.00';
-  return `$${price.toFixed(2)}`;
+  if (typeof price !== 'number') return '₹0';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(price);
 };
 
 const getProductImages = (image: string | string[] | undefined | null): string[] => {

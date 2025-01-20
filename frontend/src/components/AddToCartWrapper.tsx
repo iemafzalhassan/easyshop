@@ -94,18 +94,20 @@ const AddToCartWrapper = ({
   }, [product?._id, cartItems]);
 
   // handle add to cart button
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (authLoading) {
       return; // Prevent action while auth state is loading
     }
 
     // Create cart item with required fields
     const cartItem: CartItem = {
-      product: product._id, // Set product as the ID string
+      product: product._id,
       quantity: 1,
       price: product.price,
       selectedColor: selectedColor || null,
-      selectedSize: selectedSize || null
+      selectedSize: selectedSize || null,
+      image: getProductImage(product),
+      name: product.name
     };
 
     // For clothing items, require color and size selection
@@ -116,30 +118,58 @@ const AddToCartWrapper = ({
       }
     }
 
-    // If user is not authenticated, store the item and redirect to login
+    // If user is not authenticated, handle guest cart flow
     if (!isAuthenticated) {
-      // Store the item before redirecting
+      // Store the pending cart item in Redux
       dispatch(setPendingCartItem(cartItem));
       
-      // Determine return URL
-      const returnUrl = redirectToCheckout ? '/checkout' : window.location.pathname;
+      // Store in localStorage with timestamp
+      const pendingItems = JSON.parse(localStorage.getItem('pendingCartItems') || '[]');
+      pendingItems.push({
+        ...cartItem,
+        addedAt: new Date().toISOString()
+      });
+      localStorage.setItem('pendingCartItems', JSON.stringify(pendingItems));
       
-      // Use router.replace to prevent back navigation to login page
-      router.replace(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      // Save current URL for redirect after login
+      const currentPath = window.location.pathname + window.location.search;
+      const returnUrl = redirectToCheckout ? '/checkout' : currentPath;
+      localStorage.setItem('lastAttemptedCartAction', JSON.stringify({
+        action: 'add',
+        productId: product._id,
+        returnUrl,
+        timestamp: new Date().toISOString()
+      }));
+      
+      // Show toast with action button
+      success("Please log in to add items to your cart");
+      
+      // Redirect after a short delay to allow reading the toast
+      setTimeout(async () => {
+        try {
+          await router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+        } catch (error) {
+          console.error('Navigation error:', error);
+          // Fallback to window.location if router fails
+          window.location.href = `/login?redirect=${encodeURIComponent(returnUrl)}`;
+        }
+      }, 1500); // 1.5 second delay
+      
       return;
     }
 
     try {
-      // Handle add/remove from cart
       if (addedItem) {
+        // Remove from cart
         dispatch(removeFromCart(product._id));
-        success("Item has been removed from your cart");
+        success("Item removed from cart");
       } else {
+        // Add to cart
         dispatch(addToCart(cartItem));
-        success("Item has been added to your cart");
+        success("Item added to cart");
         
-        // If redirectToCheckout is true and user is authenticated, go to checkout
-        if (redirectToCheckout && isAuthenticated) {
+        // If redirectToCheckout is true, go to checkout
+        if (redirectToCheckout) {
           router.push('/checkout');
         }
       }

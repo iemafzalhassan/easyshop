@@ -23,7 +23,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/services/api";
 import { setCurrentUser } from "@/lib/features/auth/authSlice";
 
-const MAX_FILE_SIZE = 200 * 1024; // 200KB in bytes
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const ContainerVariants: Variants = {
@@ -61,8 +61,9 @@ const item: Variants = {
   },
 };
 
+const DEFAULT_AVATAR = '/assets/images/default-avatar.png';
+
 const formSchema = z.object({
-  avatar: z.string(),
   name: z
     .string()
     .min(2, "Name must contain at least 2 character(s)")
@@ -77,7 +78,8 @@ const formSchema = z.object({
 });
 
 const ProfileForm = () => {
-  const [uploadImgUrl, setUploadImgUrl] = useState("");
+  const [avatar, setAvatar] = useState(DEFAULT_AVATAR);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { currentUser } = useAppSelector((state) => state.auth);
   const { toast } = useToast();
@@ -86,93 +88,123 @@ const ProfileForm = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      avatar: currentUser?.avatar || "/assets/icons/Avatar.png",
       name: currentUser?.name || "",
       email: currentUser?.email || "",
       bio: "",
     },
   });
 
-  // Define a submit handler.
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  // Handle image upload
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      const response = await api.patch('/profile', values);
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          variant: "destructive",
+          title: "Invalid file type",
+          description: "Please upload an image file.",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          variant: "destructive",
+          title: "File too large",
+          description: "Please upload an image smaller than 5MB.",
+        });
+        return;
+      }
+
+      setAvatarFile(file);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error handling image upload:', error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "Failed to process image. Please try again.",
+      });
+    }
+  };
+
+  // Define a submit handler.
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      setIsUploading(true);
+
+      // Upload avatar if changed
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append('avatar', avatarFile);
+        
+        try {
+          const response = await api.patch('/api/v1/profile/avatar', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+
+          if (response.data.status === 'success') {
+            // Update currentUser with new avatar URL
+            dispatch(setCurrentUser({
+              ...currentUser!,
+              avatar: response.data.data.user.avatar
+            }));
+          }
+        } catch (error) {
+          console.error('Avatar upload error:', error);
+          toast({
+            variant: "destructive",
+            title: "Avatar upload failed",
+            description: "Failed to upload avatar, but profile will be updated.",
+          });
+        }
+      }
+
+      // Update profile
+      const response = await api.patch('/api/v1/profile', values);
       
       if (response.data.status === 'success') {
-        dispatch(setCurrentUser(response.data.data.user));
+        // Merge the existing user data with updated values
+        dispatch(setCurrentUser({
+          ...currentUser!,
+          ...response.data.data.user
+        }));
+        
         toast({
           title: "Success",
           description: "Profile updated successfully",
         });
       }
     } catch (error: any) {
+      console.error('Profile update error:', error);
       toast({
+        variant: "destructive",
         title: "Error",
         description: error.response?.data?.message || "Failed to update profile",
-        variant: "destructive",
-      });
-    }
-  }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        title: "Error",
-        description: "Image size should be less than 200KB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check file type
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      toast({
-        title: "Error",
-        description: "Please upload a valid image file (JPEG, PNG, or WebP)",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-
-      // Create FormData
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      // Upload image
-      const response = await api.patch('/profile/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.status === 'success') {
-        const avatarUrl = response.data.data.user.avatar;
-        setUploadImgUrl(avatarUrl);
-        form.setValue('avatar', avatarUrl);
-        dispatch(setCurrentUser(response.data.data.user));
-        
-        toast({
-          title: "Success",
-          description: "Profile picture updated successfully",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to upload image",
-        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
     }
   };
+
+  useEffect(() => {
+    // Initialize avatar from currentUser
+    if (currentUser?.avatar) {
+      setAvatar(currentUser.avatar);
+    }
+  }, [currentUser]);
 
   return (
     <AnimatePresence>
@@ -198,7 +230,7 @@ const ProfileForm = () => {
                   )}
                 </div>
                 <Image
-                  src={uploadImgUrl || currentUser?.avatar || "/assets/icons/Avatar.png"}
+                  src={avatar}
                   alt="avatar"
                   width={100}
                   height={100}

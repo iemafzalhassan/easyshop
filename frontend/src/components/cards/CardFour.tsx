@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AddToCartWrapper from "@/components/AddToCartWrapper";
 import { discountPercent } from "../../lib/utils";
+import { formatPrice } from "@/utils/format";
 import { Product } from "@/types/product.d";
 import { cn } from "@/lib/utils";
 import React from 'react';
@@ -127,12 +128,12 @@ const CardFour = ({
           {/* Price */}
           <div className="flex items-center gap-2">
             <span className="text-lg font-semibold text-primary">
-              ${price.toFixed(2)}
+              {formatPrice(price)}
             </span>
             {oldPrice && oldPrice > price && (
-              <span className="text-sm text-muted-foreground line-through">
-                ${oldPrice.toFixed(2)}
-              </span>
+              <del className="text-sm text-muted-foreground">
+                {formatPrice(oldPrice)}
+              </del>
             )}
           </div>
 

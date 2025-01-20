@@ -52,22 +52,68 @@ export const SignupForm = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
-      const { user } = await authService.register(values);
+
+      // Remove confirmPassword before sending to API
+      const { confirmPassword, ...registrationData } = values;
+      
+      const { user, token } = await authService.register(registrationData);
+      
+      if (!user || !token) {
+        throw new Error('Registration failed - invalid response');
+      }
+
+      // Set the current user in Redux store
       dispatch(setCurrentUser(user));
       
+      // Initialize cart state
+      dispatch({ type: 'cart/initializeCart', payload: user._id });
+
       toast({
         title: "Success",
-        description: "Account created successfully",
+        description: "Account created successfully! Welcome to EasyShop!",
       });
 
-      router.push("/");
+      // Get the redirect URL from query params or default to home
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get('redirect') || '/';
+      
+      // Small delay to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      router.push(redirectTo);
       router.refresh();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create account",
-        variant: "destructive",
-      });
+      console.error('Signup error:', error);
+      
+      // Check if it's an existing user error
+      if (error.message.includes('already exists')) {
+        const loginUrl = `/login?email=${encodeURIComponent(values.email)}&redirect=${encodeURIComponent(window.location.pathname)}`;
+        
+        toast({
+          title: "Account Exists",
+          description: error.message,
+          action: (
+            <Link href={loginUrl}>
+              <Button variant="outline" size="sm">
+                Go to Login
+              </Button>
+            </Link>
+          ),
+          variant: "default",
+          duration: 5000,
+        });
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          router.push(loginUrl);
+        }, 2000);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create account. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

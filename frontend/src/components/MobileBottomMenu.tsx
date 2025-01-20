@@ -31,7 +31,11 @@ const MobileBottomMenu = () => {
   }, []);
 
   const handleProfile = () => {
-    isAuthenticated ? dispatch(toggleProfileNav()) : router.push("/login");
+    if (isAuthenticated) {
+      dispatch(toggleProfileNav());
+    } else {
+      router.push('/login');
+    }
   };
 
   return (

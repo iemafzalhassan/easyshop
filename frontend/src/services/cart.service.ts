@@ -1,27 +1,42 @@
 import { api } from './api';
 import { CartItem } from '@/types/product.d';
 
+const CART_ENDPOINTS = {
+  SYNC: '/api/v1/cart/sync',
+  GET: '/api/v1/cart',
+  ADD: '/cart',
+  UPDATE: '/cart/',
+  REMOVE: '/cart/',
+  CLEAR: '/cart',
+  PLACE_ORDER: '/orders',
+};
+
 export const cartService = {
   async getCart() {
     try {
-      const response = await api.get('/cart');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return { items: [] };
+      }
+
+      const response = await api.get(CART_ENDPOINTS.GET);
       return response.data;
-    } catch (error: any) {
-      console.error('Error getting cart:', error);
-      throw new Error(error.response?.data?.message || 'Failed to get cart');
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      return { items: [] };
     }
   },
 
   async addToCart(productId: string, quantity: number, color?: string, size?: string) {
     try {
-      const response = await api.post('/cart', {
+      const response = await api.post(CART_ENDPOINTS.ADD, {
         productId,
         quantity,
         color: color || null,
         size: size || null
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding to cart:', error);
       throw new Error(error.response?.data?.message || 'Failed to add to cart');
     }
@@ -29,13 +44,13 @@ export const cartService = {
 
   async updateCartItem(productId: string, quantity: number, color?: string, size?: string) {
     try {
-      const response = await api.patch(`/cart/${productId}`, {
+      const response = await api.patch(`${CART_ENDPOINTS.UPDATE}${productId}`, {
         quantity,
         color: color || null,
         size: size || null
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating cart item:', error);
       throw new Error(error.response?.data?.message || 'Failed to update cart item');
     }
@@ -43,9 +58,9 @@ export const cartService = {
 
   async removeFromCart(productId: string) {
     try {
-      const response = await api.delete(`/cart/${productId}`);
+      const response = await api.delete(`${CART_ENDPOINTS.REMOVE}${productId}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error removing from cart:', error);
       throw new Error(error.response?.data?.message || 'Failed to remove from cart');
     }
@@ -53,9 +68,9 @@ export const cartService = {
 
   async clearCart() {
     try {
-      const response = await api.delete('/cart');
+      const response = await api.delete(CART_ENDPOINTS.CLEAR);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error clearing cart:', error);
       throw new Error(error.response?.data?.message || 'Failed to clear cart');
     }
@@ -79,41 +94,25 @@ export const cartService = {
 
   async syncCart(items: CartItem[]) {
     try {
-      if (!items || items.length === 0) {
+      const token = localStorage.getItem('token');
+      if (!token) {
         return { items: [] };
       }
 
-      // Format items before validation to ensure consistent structure
-      const formattedItems = items.map(item => ({
-        ...item,
-        productId: typeof item.product === 'string' ? item.product : item.product._id,
-        color: item.selectedColor || null,
-        size: item.selectedSize || null
+      // Transform items to ensure proper product ID handling
+      const transformedItems = items.map(item => ({
+        product: typeof item.product === 'string' ? item.product : item.product._id,
+        quantity: item.quantity,
+        selectedColor: item.selectedColor || null,
+        selectedSize: item.selectedSize || null,
+        price: item.price
       }));
 
-      // Validate each item before syncing
-      for (const item of formattedItems) {
-        await this.validateCartItem(item);
-      }
-
-      const response = await api.post('/cart/sync', { 
-        items: formattedItems.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          color: item.color,
-          size: item.size,
-          price: item.price
-        }))
-      });
-      
-      if (!response.data?.data?.cart) {
-        throw new Error('Invalid response from server');
-      }
-
-      return response.data.data.cart;
-    } catch (error: any) {
+      const response = await api.post(CART_ENDPOINTS.SYNC, { items: transformedItems });
+      return response.data.data || { items: [] };
+    } catch (error) {
       console.error('Error syncing cart:', error);
-      throw new Error(error.response?.data?.message || 'Failed to sync cart');
+      throw error;
     }
   },
 
@@ -133,26 +132,26 @@ export const cartService = {
       // First get current cart
       const cartResponse = await this.getCart();
       
-      if (!cartResponse?.items || cartResponse.items.length === 0) {
+      if (!cartResponse?.data?.cart?.items || cartResponse.data.cart.items.length === 0) {
         throw new Error('Cart is empty');
       }
 
       // Create order payload
       const orderPayload = {
         ...orderData,
-        items: cartResponse.items.map(item => ({
-          product: item._id || item.productId,
+        items: cartResponse.data.cart.items.map(item => ({
+          product: item.product._id || item.product,
           quantity: item.quantity,
           price: item.price,
-          color: item.color || item.selectedColor || null,
-          size: item.size || item.selectedSize || null
+          selectedColor: item.selectedColor || null,
+          selectedSize: item.selectedSize || null
         }))
       };
 
       // Place order
-      const response = await api.post('/orders', orderPayload);
+      const response = await api.post(CART_ENDPOINTS.PLACE_ORDER, orderPayload);
       
-      if (!response.data.success) {
+      if (response.data.status !== 'success') {
         throw new Error(response.data.message || 'Failed to place order');
       }
 
@@ -160,9 +159,9 @@ export const cartService = {
       await this.clearCart();
       
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error placing order:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Failed to place order');
+      throw error;
     }
   }
 };

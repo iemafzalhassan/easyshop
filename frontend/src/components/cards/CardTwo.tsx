@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AddToCartWrapper from "@/components/AddToCartWrapper";
 import { discountPercent } from "../../lib/utils";
+import { formatPrice } from "@/utils/format";
 import { Product } from "@/types/product";
 import { useState } from "react";
 
@@ -94,12 +95,12 @@ const CardTwo = ({
         <div className="mt-auto flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-sm font-medium text-gray-900">
-              ${price.toFixed(2)}
+              {formatPrice(price)}
               {unit_of_measure && <span className="ml-1 text-xs text-gray-500">/{unit_of_measure}</span>}
             </span>
             {oldPrice && oldPrice > price && (
               <>
-                <del className="text-sm text-gray-500">${oldPrice.toFixed(2)}</del>
+                <del className="text-sm text-gray-500">{formatPrice(oldPrice)}</del>
                 <span className="text-xs text-emerald-500">
                   {discountPercent(oldPrice, price)}% off
                 </span>

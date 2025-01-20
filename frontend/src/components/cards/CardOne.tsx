@@ -1,6 +1,7 @@
 "use client";
 
 import { discountPercent } from "@/lib/utils";
+import { formatPrice } from "@/utils/format";
 import Image from "next/image";
 import Link from "next/link";
 import AddToCartWrapper from "@/components/AddToCartWrapper";
@@ -45,10 +46,10 @@ const CardOne = ({
             {title}
           </h2>
           <p className="mt-1 flex gap-2 items-end">
-            <span className="">${price.toFixed(2)}</span>
+            <span className="">{formatPrice(price)}</span>
             {oldPrice && (
               <del className="text-sm text-gray-400">
-                ${oldPrice.toFixed(2)}
+                {formatPrice(oldPrice)}
               </del>
             )}
           </p>

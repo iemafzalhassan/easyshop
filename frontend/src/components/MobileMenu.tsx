@@ -6,10 +6,12 @@ import { HiOutlineXMark } from "react-icons/hi2";
 import { Button } from "./ui/button";
 import Logo from "@/assets/Logo";
 import { ToggleTheme } from "./ToggleTheme";
+import { useRouter } from "next/navigation";
 
 interface Link {
   title: string;
   url: string;
+  external?: boolean;
   subLinks?: Link[];
 }
 
@@ -21,85 +23,90 @@ interface MobileMenuProps {
 
 const MobileMenu = ({ isOpen, onClose, links }: MobileMenuProps) => {
   const { currentUser } = useAppSelector((state) => state.auth);
+  const router = useRouter();
 
   if (!isOpen) return null;
 
   return (
-    <>
-      <div
-        className="fixed inset-0 bg-black/30 z-40"
-        onClick={onClose}
-      />
-      <div className="fixed top-0 left-0 bottom-0 w-[300px] bg-background z-50 p-4">
-        <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+      <div className="fixed right-0 top-0 h-full w-full border-l bg-background p-6 shadow-lg sm:w-[350px]">
+        <div className="flex items-center justify-between">
           <Logo />
-          <button
-            type="button"
-            className="text-xl p-1 h-6 w-6 bg-primary rounded-full flex justify-center items-center text-white"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
             onClick={onClose}
-            title="close"
           >
-            <HiOutlineXMark />
-          </button>
+            <HiOutlineXMark className="h-4 w-4" />
+          </Button>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <ul className="px-5 relative mt-3">
-            <li className="absolute top-0 right-4">
-              <ToggleTheme />
-            </li>
-            {links.map((link, index) =>
-              link.subLinks ? (
-                <div key={index} className="space-y-2">
-                  <h3 className="font-medium">{link.title}</h3>
-                  <div className="ml-4 space-y-2">
-                    {link.subLinks.map((subLink, subIndex) => (
-                      <Link
-                        key={subIndex}
-                        href={subLink.url}
-                        className="block text-muted-foreground hover:text-foreground"
-                        onClick={onClose}
-                      >
-                        {subLink.title}
-                      </Link>
-                    ))}
+        <div className="mt-8">
+          <nav className="flex flex-col space-y-4">
+            {links.map((link) => (
+              <div key={link.title}>
+                {link.subLinks ? (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold">{link.title}</h4>
+                    <div className="ml-4 flex flex-col space-y-2">
+                      {link.subLinks.map((subLink) => (
+                        <Link
+                          key={subLink.title}
+                          href={subLink.url}
+                          target={subLink.external ? "_blank" : undefined}
+                          rel={subLink.external ? "noopener noreferrer" : undefined}
+                          className="text-muted-foreground hover:text-primary"
+                          onClick={onClose}
+                        >
+                          {subLink.title}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Link
-                  key={index}
-                  href={link.url}
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={onClose}
-                >
-                  {link.title}
-                </Link>
-              )
-            )}
-          </ul>
+                ) : (
+                  <Link
+                    href={link.url}
+                    className="text-lg font-medium"
+                    onClick={onClose}
+                  >
+                    {link.title}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </nav>
+
+          <div className="mt-6">
+            <ToggleTheme />
+          </div>
 
           {!currentUser && (
             <div className="mt-4 space-y-2">
               <Button
                 variant="ghost"
                 className="w-full justify-start"
-                onClick={onClose}
-                asChild
+                onClick={() => {
+                  onClose();
+                  router.push('/login');
+                }}
               >
-                <Link href="/login">Login</Link>
+                Login
               </Button>
               <Button
                 className="w-full justify-start"
-                onClick={onClose}
-                asChild
+                onClick={() => {
+                  onClose();
+                  router.push('/register');
+                }}
               >
-                <Link href="/register">Sign up</Link>
+                Sign up
               </Button>
             </div>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
