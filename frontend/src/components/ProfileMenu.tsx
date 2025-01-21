@@ -55,7 +55,7 @@ export function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 outline-none">
+        <button className="flex items-center outline-none">
           <div className="relative w-8 h-8 overflow-hidden rounded-full">
             <Image
               src={avatarSrc}
@@ -66,9 +66,6 @@ export function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
               onError={() => setAvatarSrc(DEFAULT_AVATAR)}
             />
           </div>
-          <span className="text-sm font-medium hidden md:block">
-            {user?.name || "User"}
-          </span>
         </button>
       </DropdownMenuTrigger>
 

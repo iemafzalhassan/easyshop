@@ -1,6 +1,6 @@
 const { body } = require('express-validator');
 
-exports.registerValidator = [
+const registerValidator = [
   body('name')
     .trim()
     .notEmpty()
@@ -12,13 +12,13 @@ exports.registerValidator = [
     .withMessage('Please enter a valid email')
     .normalizeEmail(),
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
     .matches(/\d/)
     .withMessage('Password must contain at least one number')
 ];
 
-exports.loginValidator = [
+const loginValidator = [
   body('email')
     .isEmail()
     .withMessage('Please enter a valid email')
@@ -27,3 +27,22 @@ exports.loginValidator = [
     .notEmpty()
     .withMessage('Password is required')
 ];
+
+const changePasswordValidator = [
+  body('currentPassword')
+    .notEmpty()
+    .withMessage('Current password is required'),
+  body('newPassword')
+    .notEmpty()
+    .withMessage('New password is required')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+];
+
+module.exports = {
+  registerValidator,
+  loginValidator,
+  changePasswordValidator
+};
