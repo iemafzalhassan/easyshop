@@ -21,8 +21,10 @@ api.interceptors.request.use(
       }
     }
 
-    // Add /api/v1 prefix to all requests
-    config.url = `/api/v1${config.url}`;
+    // Add /api/v1 prefix to all requests except those that already have it
+    if (config.url && !config.url.startsWith('/api/v1')) {
+      config.url = `/api/v1${config.url}`;
+    }
     
     return config;
   },
@@ -43,18 +45,23 @@ api.interceptors.response.use(
 
       try {
         // Try to refresh the token
-        const response = await authService.refreshToken();
-        if (response) {
-          // Retry the original request with new token
+        const response = await api.post('/auth/refresh-token');
+        const { token } = response.data;
+
+        if (token) {
+          localStorage.setItem('token', token);
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // Handle refresh token failure (e.g., redirect to login)
-        console.error('Token refresh failed:', refreshError);
-        // Redirect to login or handle as needed
-        return Promise.reject(refreshError);
+        // Handle refresh token failure
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          window.location.href = '/auth/login';
+        }
       }
     }
+
     return Promise.reject(error);
   }
 );

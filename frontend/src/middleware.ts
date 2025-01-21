@@ -4,9 +4,6 @@ import type { NextRequest } from 'next/server';
 // Protected routes that require authentication
 const protectedRoutes = ['/checkout', '/profile', '/order-confirmation'];
 
-// Auth routes that should redirect to home if already authenticated
-const authRoutes = ['/login', '/register'];
-
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname, search } = request.nextUrl;
@@ -42,24 +39,14 @@ export function middleware(request: NextRequest) {
       // Store the attempted URL to redirect back after login
       const redirectUrl = search ? `${pathname}${search}` : pathname;
       return NextResponse.redirect(
-        new URL(`/login?redirect=${encodeURIComponent(redirectUrl)}`, request.url)
+        new URL(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`, request.url)
       );
     }
     // User is authenticated, allow access to protected route
     return NextResponse.next();
   }
 
-  // Handle auth routes (login/register)
-  if (authRoutes.includes(pathname)) {
-    if (isAuthenticated) {
-      // Get the redirect URL from query params or default to home
-      const params = new URLSearchParams(search);
-      const redirectTo = params.get('redirect') || '/';
-      return NextResponse.redirect(new URL(redirectTo, request.url));
-    }
-    return NextResponse.next();
-  }
-
+  // Allow access to all other routes
   return NextResponse.next();
 }
 
@@ -69,7 +56,5 @@ export const config = {
     '/checkout/:path*',
     '/profile/:path*',
     '/order-confirmation/:path*',
-    '/login',
-    '/register',
   ],
 };

@@ -2,5 +2,6 @@
   "/page": "app/page.js",
   "/icon.svg/route": "app/icon.svg/route.js",
   "/not-found": "app/not-found.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js"
+  "/auth/login/page": "app/auth/login/page.js",
+  "/auth/register/page": "app/auth/register/page.js"
 }

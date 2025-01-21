@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { authService } from "@/services/auth.service";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { HiMenuAlt2 } from "react-icons/hi";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { BsCartCheckFill } from "react-icons/bs";
@@ -94,6 +94,14 @@ const Navbar = () => {
     }
   };
 
+  const handleLoginClick = useCallback(() => {
+    router.push('/auth/login');
+  }, [router]);
+
+  const handleSignupClick = useCallback(() => {
+    router.push('/auth/register');
+  }, [router]);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -162,21 +170,20 @@ const Navbar = () => {
           {currentUser ? (
             <ProfileMenu user={currentUser} onLogout={handleLogout} />
           ) : (
-            <>
-              <Button
-                variant="ghost"
-                asChild
-                onClick={() => router.push('/login')}
+            <div className="flex items-center gap-x-2">
+              <button
+                onClick={() => window.location.href = '/auth/login'}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 bg-transparent hover:bg-accent"
               >
-                <Link href="/login" className="hover:no-underline">Login</Link>
-              </Button>
-              <Button
-                asChild
-                onClick={() => router.push('/register')}
+                Login
+              </button>
+              <button
+                onClick={() => window.location.href = '/auth/register'}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 bg-gradient hover:text-primary border-2 border-primary hover:bg-background text-white"
               >
-                <Link href="/register" className="hover:no-underline">Sign up</Link>
-              </Button>
-            </>
+                Sign up
+              </button>
+            </div>
           )}
         </div>
       </div>
