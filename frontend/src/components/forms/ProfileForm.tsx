@@ -22,302 +22,257 @@ import { Variants, motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/services/api";
 import { setCurrentUser } from "@/lib/features/auth/authSlice";
+import { useRouter } from "next/navigation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const DEFAULT_AVATAR = "/assets/icons/avatar.png";
 
 const ContainerVariants: Variants = {
   hidden: {
     opacity: 0,
+    y: 20,
   },
-  visible: {
-    opacity: 1,
-    transition: {
-      duration: 0.1,
-      when: "beforeChildren",
-      staggerChildren: 0.1,
-    },
-  },
-  exit: {
-    opacity: 0,
-    transition: {
-      when: "afterChildren",
-    },
-  },
-};
-
-const item: Variants = {
-  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      stiffness: 90,
+      duration: 0.3,
     },
   },
   exit: {
     opacity: 0,
-    x: "100%",
+    y: -20,
+    transition: {
+      duration: 0.2,
+    },
   },
 };
 
-const DEFAULT_AVATAR = '/assets/images/default-avatar.png';
-
 const formSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Name must contain at least 2 character(s)")
-    .max(20, "Name must contain at most 20 character(s)"),
-  email: z
-    .string({ required_error: "Email is Required" })
-    .email("Please enter your valid email address"),
-  bio: z
-    .string({ required_error: "bio is required" })
-    .min(2, "bio is required")
-    .max(100, "bio less than or equal to 100 characters"),
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email.",
+  }),
+  bio: z.string().optional(),
+  avatar: z
+    .any()
+    .refine((file) => !file || file?.size <= MAX_FILE_SIZE, "Max file size is 5MB.")
+    .refine(
+      (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file?.type),
+      "Only .jpg, .jpeg, .png and .webp formats are supported."
+    )
+    .optional(),
 });
 
-const ProfileForm = () => {
-  const [avatar, setAvatar] = useState(DEFAULT_AVATAR);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const { currentUser } = useAppSelector((state) => state.auth);
+type FormValues = z.infer<typeof formSchema>;
+
+function ProfileForm() {
   const { toast } = useToast();
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const currentUser = useAppSelector((state) => state.auth.currentUser);
+  const [avatarPreview, setAvatarPreview] = useState<string>(currentUser?.avatar || DEFAULT_AVATAR);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: currentUser?.name || "",
       email: currentUser?.email || "",
-      bio: "",
+      bio: currentUser?.bio || "",
     },
   });
 
-  // Handle image upload
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (currentUser) {
+      form.reset({
+        name: currentUser.name,
+        email: currentUser.email,
+        bio: currentUser.bio || "",
+      });
+      setAvatarPreview(currentUser.avatar || DEFAULT_AVATAR);
+    }
+  }, [currentUser, form]);
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
     try {
-      const file = event.target.files?.[0];
-      if (!file) return;
+      // Validate file
+      await formSchema.shape.avatar.parseAsync(file);
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          variant: "destructive",
-          title: "Invalid file type",
-          description: "Please upload an image file.",
-        });
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > MAX_FILE_SIZE) {
-        toast({
-          variant: "destructive",
-          title: "File too large",
-          description: "Please upload an image smaller than 5MB.",
-        });
-        return;
-      }
-
-      setAvatarFile(file);
-
-      // Create preview URL
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatar(reader.result as string);
+        setAvatarPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('Error handling image upload:', error);
+
+      // Set form value
+      form.setValue("avatar", file);
+    } catch (error: any) {
       toast({
+        title: "Error",
+        description: error.message,
         variant: "destructive",
-        title: "Upload failed",
-        description: "Failed to process image. Please try again.",
       });
     }
   };
 
-  // Define a submit handler.
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     try {
       setIsUploading(true);
 
-      // Upload avatar if changed
-      if (avatarFile) {
+      let avatarUrl = currentUser?.avatar;
+
+      // Handle avatar upload if a new file is selected
+      if (values.avatar instanceof File) {
         const formData = new FormData();
-        formData.append('avatar', avatarFile);
-        
-        try {
-          const response = await api.patch('/api/v1/profile/avatar', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          });
+        formData.append('avatar', values.avatar);
 
-          if (response.data.status === 'success') {
-            // Update currentUser with new avatar URL
-            dispatch(setCurrentUser({
-              ...currentUser!,
-              avatar: response.data.data.user.avatar
-            }));
-          }
-        } catch (error) {
-          console.error('Avatar upload error:', error);
-          toast({
-            variant: "destructive",
-            title: "Avatar upload failed",
-            description: "Failed to upload avatar, but profile will be updated.",
-          });
-        }
-      }
-
-      // Update profile
-      const response = await api.patch('/api/v1/profile', values);
-      
-      if (response.data.status === 'success') {
-        // Merge the existing user data with updated values
-        dispatch(setCurrentUser({
-          ...currentUser!,
-          ...response.data.data.user
-        }));
-        
-        toast({
-          title: "Success",
-          description: "Profile updated successfully",
+        const response = await api.patch('/profile/avatar', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
+
+        avatarUrl = response.data.data.user.avatar;
       }
-    } catch (error: any) {
-      console.error('Profile update error:', error);
+
+      // Update user profile
+      const response = await api.patch('/profile', {
+        name: values.name,
+        email: values.email,
+        bio: values.bio,
+      });
+
+      dispatch(setCurrentUser(response.data.data.user));
+
       toast({
-        variant: "destructive",
+        title: "Success",
+        description: "Profile updated successfully!",
+      });
+
+      router.refresh();
+    } catch (error: any) {
+      toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to update profile",
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
     }
   };
 
-  useEffect(() => {
-    // Initialize avatar from currentUser
-    if (currentUser?.avatar) {
-      setAvatar(currentUser.avatar);
-    }
-  }, [currentUser]);
-
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         variants={ContainerVariants}
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="profile-form"
+        className="w-full max-w-2xl mx-auto p-6 space-y-8"
       >
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold">Profile Settings</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Update your profile information
+          </p>
+        </div>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <motion.div variants={item} className="flex justify-center">
-              <label
-                htmlFor="avatar"
-                className="cursor-pointer relative overflow-hidden rounded-full group"
-              >
-                <div className="absolute top-0 left-0 w-full h-full bg-black/65 flex justify-center items-center text-2xl invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300 text-white">
-                  {isUploading ? (
-                    <div className="animate-spin">⌛</div>
-                  ) : (
-                    <IoMdCloudUpload />
-                  )}
-                </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative w-32 h-32">
                 <Image
-                  src={avatar}
-                  alt="avatar"
-                  width={100}
-                  height={100}
-                  className="object-cover w-[100px] h-[100px] rounded-full"
+                  src={avatarPreview}
+                  alt="Avatar"
+                  width={128}
+                  height={128}
+                  className="rounded-full object-cover"
                 />
-              </label>
-              <input
-                type="file"
-                name="avatar"
-                id="avatar"
-                className="hidden"
-                title="avatar"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
-                onChange={handleImageUpload}
-                disabled={isUploading}
-              />
-            </motion.div>
-
-            <motion.div variants={item}>
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter your name"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <motion.div variants={item}>
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter your email"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <motion.div variants={item}>
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Apne Jeevan ka Uddeshya yha likhe."
-                        id="bio"
-                        maxLength={100}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isUploading}>
-                Save Changes
-              </Button>
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
+                >
+                  <IoMdCloudUpload className="w-5 h-5" />
+                </label>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </div>
+              <p className="text-sm text-gray-500">
+                Click the upload icon to change your profile picture
+              </p>
             </div>
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Tell us about yourself"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isUploading}
+            >
+              {isUploading ? "Updating..." : "Update Profile"}
+            </Button>
           </form>
         </Form>
       </motion.div>
     </AnimatePresence>
   );
-};
+}
 
 export default ProfileForm;

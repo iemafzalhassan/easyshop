@@ -13,6 +13,9 @@ import { BsCartCheckFill } from "react-icons/bs";
 import { CgProfile } from "react-icons/cg";
 import { FaHeart } from "react-icons/fa";
 import { IoBagCheckOutline, IoLogOut } from "react-icons/io5";
+import { useEffect, useState } from "react";
+
+const DEFAULT_AVATAR = "/assets/icons/avatar.png";
 
 const profileLinks = [
   {
@@ -43,40 +46,51 @@ interface ProfileMenuProps {
 }
 
 export function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
+  const [avatarSrc, setAvatarSrc] = useState(user?.avatar || DEFAULT_AVATAR);
+
+  useEffect(() => {
+    setAvatarSrc(user?.avatar || DEFAULT_AVATAR);
+  }, [user?.avatar]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 outline-none">
           <div className="relative w-8 h-8 overflow-hidden rounded-full">
             <Image
-              src={user.avatar || "/assets/icons/Avatar.png"}
-              alt={user.name}
+              src={avatarSrc}
+              alt={user?.name || "User"}
               width={32}
               height={32}
               className="object-cover w-full h-full"
-              priority
+              onError={() => setAvatarSrc(DEFAULT_AVATAR)}
             />
           </div>
-          <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
+          <span className="text-sm font-medium hidden md:block">
+            {user?.name || "User"}
+          </span>
         </button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56">
         {profileLinks.map((link) => (
-          <Link key={link.title} href={link.url}>
-            <DropdownMenuItem className="cursor-pointer">
-              <span className="mr-2">{link.icon}</span>
-              {link.title}
-            </DropdownMenuItem>
-          </Link>
+          <DropdownMenuItem key={link.url} asChild>
+            <Link
+              href={link.url}
+              className="flex items-center gap-2 cursor-pointer w-full"
+            >
+              {link.icon}
+              <span>{link.title}</span>
+            </Link>
+          </DropdownMenuItem>
         ))}
 
         <DropdownMenuItem
-          className="cursor-pointer text-destructive focus:text-destructive"
           onClick={onLogout}
+          className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
         >
-          <IoLogOut className="mr-2" />
-          Logout
+          <IoLogOut />
+          <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

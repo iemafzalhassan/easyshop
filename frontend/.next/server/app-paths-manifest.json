@@ -1,7 +1,10 @@
 {
-  "/page": "app/page.js",
+  "/checkout/page": "app/checkout/page.js",
   "/icon.svg/route": "app/icon.svg/route.js",
   "/not-found": "app/not-found.js",
-  "/auth/login/page": "app/auth/login/page.js",
-  "/auth/register/page": "app/auth/register/page.js"
+  "/page": "app/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/profile/change-password/page": "app/profile/change-password/page.js",
+  "/profile/orders/page": "app/profile/orders/page.js",
+  "/auth/login/page": "app/auth/login/page.js"
 }
