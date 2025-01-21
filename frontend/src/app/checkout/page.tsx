@@ -64,6 +64,8 @@ const CheckoutPage = () => {
   }, [mounted, isAuthenticated, router]);
 
   useEffect(() => {
+    if (!searchParams) return;
+    
     const productId = searchParams.get("product");
     const quantity = searchParams.get("quantity");
     const color = searchParams.get("color");

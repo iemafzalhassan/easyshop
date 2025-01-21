@@ -1,50 +1,90 @@
-# Version control
+# Version Control
 .git
 .gitignore
+.gitattributes
+.github
 
 # Dependencies
-node_modules
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+**/node_modules
+**/bower_components
+**/.pnp
+**/.pnp.js
+**/yarn.lock
+**/package-lock.json
+**/npm-shrinkwrap.json
+
+# Environment
+**/.env
+**/.env.*
+!**/.env.example
+
+# Development
+**/.vscode
+**/.idea
+**/.vs
+**/*.sublime-*
+**/.DS_Store
+**/Thumbs.db
+
+# Testing
+**/coverage
+**/.nyc_output
+**/jest-*
+**/__tests__
+**/__mocks__
+**/*.test.*
+**/*.spec.*
 
 # Build outputs
-.next
-out
-dist
-build
+**/.next
+**/out
+**/build
+**/dist
+**/.turbo
+**/.swc
+**/.cache
+**/.temp
 
-# Environment files
-.env*
-.env.local
-.env.development
-.env.test
-.env.production
-
-# IDE files
-.idea
-.vscode
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Test coverage
-coverage
-
-# Temporary files
-*.log
-*.tmp
-.cache
-
-# Docker files
-Dockerfile
-.dockerignore
-docker-compose*
+# Logs
+**/logs
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
 
 # Documentation
-README.md
-CHANGELOG.md
-docs 
+**/docs
+**/*.md
+!README.md
+**/CHANGELOG.md
+**/LICENSE
+
+# Backend specific
+**/uploads
+**/tmp
+**/*.sqlite
+**/*.sqlite3
+# **/.db
+
+# Frontend specific
+**/.storybook
+**/storybook-static
+**/*.stories.*
+**/.eslintcache
+**/*.tsbuildinfo
+
+# Docker
+.dockerignore
+**/Dockerfile*
+**/docker-compose*
+**/.docker
+
+# Misc
+**/.vercel
+**/.netlify
+**/*.pem
+**/*.key
+**/*.cert
+**/*.crt
+**/*.pfx
+**/*.p12

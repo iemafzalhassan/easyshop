@@ -83,15 +83,29 @@ const AddToCartWrapper = ({
   };
 
   useEffect(() => {
-    if (product?._id && cartItems) {
-      const foundItem = cartItems.find(item => 
-        typeof item.product === 'string' 
-          ? item.product === product._id 
-          : item.product._id === product._id
-      );
-      setAddedItem(foundItem);
-    }
+    const handleUpdateAddedItem = async () => {
+      if (product?._id && cartItems) {
+        const foundItem = cartItems.find(item => 
+          typeof item.product === 'string' 
+            ? item.product === product._id 
+            : item.product._id === product._id
+        );
+        setAddedItem(foundItem);
+      }
+    };
+
+    handleUpdateAddedItem();
   }, [product?._id, cartItems]);
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      // No effect code here
+    }
+  }, [isAuthenticated, currentUser]);
+
+  const mounted = true;
+
+  if (!mounted) return null;
 
   // handle add to cart button
   const handleAddToCart = async () => {

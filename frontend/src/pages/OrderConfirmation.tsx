@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
     Container,
     Paper,
@@ -29,6 +29,7 @@ import { styled } from '@mui/material/styles';
 import { api } from '../services/api';
 import { formatCurrency } from '../utils/format';
 import { useToast } from '../hooks/useToast';
+import { COLORS } from '../assets/data/constants/theme';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
@@ -38,30 +39,30 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 const StatusChip = styled(Chip)(({ theme }) => ({
     fontWeight: 'bold',
     '&.confirmed': {
-        backgroundColor: theme.palette.success.light,
-        color: theme.palette.success.dark,
+        backgroundColor: COLORS.success.light,
+        color: theme.palette.success.contrastText,
     },
     '&.processing': {
         backgroundColor: theme.palette.warning.light,
-        color: theme.palette.warning.dark,
+        color: theme.palette.warning.contrastText,
     },
     '&.shipped': {
         backgroundColor: theme.palette.info.light,
-        color: theme.palette.info.dark,
+        color: theme.palette.info.contrastText,
     },
     '&.delivered': {
-        backgroundColor: theme.palette.success.light,
-        color: theme.palette.success.dark,
+        backgroundColor: COLORS.success.light,
+        color: theme.palette.success.contrastText,
     },
     '&.cancelled': {
         backgroundColor: theme.palette.error.light,
-        color: theme.palette.error.dark,
+        color: theme.palette.error.contrastText,
     },
 }));
 
-const OrderConfirmationPage: React.FC = () => {
-    const { orderId } = useParams();
-    const navigate = useNavigate();
+const OrderConfirmationPage = () => {
+    const router = useRouter();
+    const { orderId } = router.query;
     const { showToast } = useToast();
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -73,14 +74,14 @@ const OrderConfirmationPage: React.FC = () => {
                 setOrder(data.data.order);
             } catch (error: any) {
                 showToast(error.response?.data?.message || 'Error fetching order', 'error');
-                navigate('/orders');
+                router.push('/orders');
             } finally {
                 setLoading(false);
             }
         };
 
         fetchOrder();
-    }, [orderId, navigate, showToast]);
+    }, [orderId, router, showToast]);
 
     if (loading) {
         return (
@@ -213,13 +214,13 @@ const OrderConfirmationPage: React.FC = () => {
                 <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
                     <Button
                         variant="outlined"
-                        onClick={() => navigate('/orders')}
+                        onClick={() => router.push('/orders')}
                     >
                         View All Orders
                     </Button>
                     <Button
                         variant="contained"
-                        onClick={() => navigate('/track-order/' + order._id)}
+                        onClick={() => router.push('/track-order/' + order._id)}
                     >
                         Track Order
                     </Button>

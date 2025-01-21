@@ -8,9 +8,11 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
-  TableHeader,
   TableRow,
+  TableFooter,
+  TableHeader,
 } from "@/components/ui/table";
 import Image from "next/image";
 import Link from "next/link";

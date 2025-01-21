@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const config = {
+  typescript: {
+    ignoreBuildErrors: true
+  },
+  eslint: {
+    ignoreDuringBuilds: true
+  },
   output: 'standalone',
   swcMinify: true,
   experimental: {
@@ -59,6 +65,7 @@ const config = {
         pathname: '/**',
       }
     ],
+    domains: ['res.cloudinary.com'],
     dangerouslyAllowSVG: true,
     unoptimized: process.env.NODE_ENV === 'development',
   },

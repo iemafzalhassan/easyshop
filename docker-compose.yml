@@ -2,78 +2,105 @@ version: '3.8'
 
 services:
   frontend:
-    image: iemafzal/easyshop:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
     container_name: easyshop-frontend
-    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://api:8000/api/v1
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    depends_on:
+      - backend
     networks:
       - easyshop-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 5s
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-    labels:
-      maintainer: "Md. Afzal Hassan Ehsani"
-      maintainer.linkedin: "https://www.linkedin.com/in/iemafzalhassan/"
-
-  api:
-    image: iemafzal/easyshop-api:latest
-    container_name: easyshop-api
     restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    container_name: easyshop-backend
     ports:
-      - "8000:8000"
+      - "4000:4000"
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://mongodb:27017/easyshop
-      - JWT_SECRET=your_jwt_secret_here
-      - PORT=8000
-    networks:
-      - easyshop-network
+      - PORT=4000
+      - MONGODB_URI=mongodb://mongodb:27017/easyshop
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=http://localhost:3000
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    volumes:
+      - ./backend/logs:/app/logs
     depends_on:
       - mongodb
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/api/v1/health"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 5s
+      - redis
+    networks:
+      - easyshop-network
+    restart: unless-stopped
 
   mongodb:
     image: mongo:latest
     container_name: easyshop-mongodb
-    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     networks:
       - easyshop-network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: easyshop-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USERNAME:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-password}
+    depends_on:
+      - mongodb
+    networks:
+      - easyshop-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: easyshop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - easyshop-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   easyshop-network:
-    name: easyshop-network
     driver: bridge
 
 volumes:
   mongodb_data:
-    name: easyshop-mongodb-data
+  redis_data:

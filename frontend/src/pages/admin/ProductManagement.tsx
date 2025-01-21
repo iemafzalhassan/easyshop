@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import {
     Container,
     Paper,
@@ -18,15 +19,14 @@ import {
     Search as SearchIcon,
     FilterList as FilterIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { ProductTable } from '../../components/admin/ProductTable';
 import { ProductForm } from '../../components/admin/ProductForm';
 import { ProductFilters } from '../../components/admin/ProductFilters';
 
-const ProductManagement: React.FC = () => {
-    const navigate = useNavigate();
+const ProductManagement = () => {
+    const router = useRouter();
     const { showToast } = useToast();
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);

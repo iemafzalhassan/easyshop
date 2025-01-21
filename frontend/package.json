@@ -10,12 +10,13 @@
 		"server": "json-server --watch .db/db.json --port 8000 -m ./node_modules/json-server-auth"
 	},
 	"dependencies": {
-		"@emotion/react": "^11.14.0",
-		"@emotion/styled": "^11.14.0",
+		"@emotion/cache": "^11.11.0",
+		"@emotion/react": "^11.11.3",
+		"@emotion/styled": "^11.11.0",
 		"@hookform/resolvers": "^3.3.4",
-		"@mui/icons-material": "^6.4.0",
-		"@mui/lab": "^6.0.0-beta.23",
-		"@mui/material": "^6.4.0",
+		"@mui/icons-material": "^5.15.7",
+		"@mui/lab": "^5.0.0-alpha.163",
+		"@mui/material": "^5.15.7",
 		"@radix-ui/react-accordion": "^1.1.2",
 		"@radix-ui/react-dropdown-menu": "^2.0.6",
 		"@radix-ui/react-label": "^2.0.2",
@@ -58,6 +59,8 @@
 	"devDependencies": {
 		"@babel/core": "^7.24.0",
 		"@babel/plugin-syntax-import-assertions": "^7.26.0",
+		"@typescript-eslint/eslint-plugin": "^6.19.0",
+		"@typescript-eslint/parser": "^6.19.0",
 		"@types/node": "^20",
 		"@types/react": "^18",
 		"@types/react-dom": "^18",
