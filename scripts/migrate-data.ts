@@ -3,12 +3,10 @@ import path from 'path';
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://easyshop-mongodb:27017/easyshop';
-const scriptDir = path.resolve(path.dirname(''));
 
 // Product Schema
 const productSchema = new mongoose.Schema({
-  _id: { type: String }, // Allow string IDs
-  originalId: { type: String }, // Store the original ID
+  originalId: { type: String, required: true, unique: true },
   title: { type: String, required: true },
   description: String,
   price: { type: Number, required: true },
@@ -23,7 +21,6 @@ const productSchema = new mongoose.Schema({
   sizes: [String]
 }, {
   timestamps: true,
-  _id: false // Disable auto-generated ObjectId
 });
 
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
@@ -93,9 +90,8 @@ async function migrateData() {
       );
 
       return {
-        _id: paddedId,
-        originalId: paddedId,
         ...product,
+        originalId: paddedId,
         image: fixedImages
       };
     });
