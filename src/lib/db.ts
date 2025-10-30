@@ -3,7 +3,9 @@ import mongoose from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+  if (process.env.NEXT_PHASE !== 'phase-production-build') {
+    throw new Error('Please define the MONGODB_URI environment variable');
+  }
 }
 
 let cached: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } = (global as any).mongoose;
@@ -13,6 +15,10 @@ if (!cached) {
 }
 
 export async function dbConnect() {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return null;
+  }
+
   if (cached.conn) {
     return cached.conn;
   }

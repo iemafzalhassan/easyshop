@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "@/lib/auth/utils";
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Profile",
   description:

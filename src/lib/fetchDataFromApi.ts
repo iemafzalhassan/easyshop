@@ -1,32 +1,40 @@
 import axios from "axios";
+import { cookies } from 'next/headers';
 
-// Get the base URL from environment or use window.location.origin in the browser
-const baseURL = typeof window !== 'undefined' 
-  ? `${window.location.origin}/api`
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api');
+// Get the base URL from environment
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-// Add request interceptor to include token
+// Create a new Axios instance
 export const axiosInstance = axios.create({
   baseURL,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Important for sending cookies
+  withCredentials: true,
 });
 
-// Add request interceptor to include token from cookie
-axiosInstance.interceptors.request.use(
-  async (config) => {
-    // Get token from cookie
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-    const token = tokenCookie ? tokenCookie.split('=')[1] : null;
+// Function to get token based on environment
+const getToken = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: get token from cookies
+    const cookieStore = document.cookie.split(';');
+    const tokenCookie = cookieStore.find(cookie => cookie.trim().startsWith('token='));
+    return tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1].trim()) : null;
+  } else {
+    // Server-side: get token from next/headers
+    const cookieStore = cookies();
+    const token = cookieStore.get('token');
+    return token?.value || null;
+  }
+};
 
-    // If token exists, add it to headers
+// Add a request interceptor
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = getToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => {
@@ -37,46 +45,22 @@ axiosInstance.interceptors.request.use(
 const fetchData = {
   get: async (url: string, params = {}) => {
     try {
-      // Get token from cookie - safely check for document
-      let token = null;
-      if (typeof window !== 'undefined') {
-        const cookies = document.cookie.split(';');
-        const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-        token = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1].trim()) : null;
-        
-        // Also check for auth-token cookie
-        const authTokenCookie = cookies.find(cookie => cookie.trim().startsWith('auth-token='));
-        if (!token && authTokenCookie) {
-          token = decodeURIComponent(authTokenCookie.split('=')[1].trim());
-        }
-      }
-      
-      const config = {
-        params,
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      };
-
-      console.log('Making GET request with config:', { url, config });
-      const response = await axiosInstance.get(url, config);
+      const response = await axiosInstance.get(url, { params });
       return response;
     } catch (error) {
       console.error("Error fetching data:", error);
-      throw error;
+      // Ensure a consistent error response
+      return {
+        data: {
+          products: [],
+          total: 0
+        }
+      };
     }
   },
   post: async (url: string, data = {}) => {
     try {
-      // Get token from cookie
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-      const token = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1].trim()) : null;
-
-      const config = {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      };
-
-      console.log('Making POST request with config:', { url, data, config });
-      const response = await axiosInstance.post(url, data, config);
+      const response = await axiosInstance.post(url, data);
       return response;
     } catch (error) {
       console.error("Error posting data:", error);
@@ -86,49 +70,3 @@ const fetchData = {
 };
 
 export default fetchData;
-
-// Add client-side check before accessing browser APIs
-export const fetchDataFromApi = async (url: string) => {
-  // Skip server-side execution
-  if (typeof window === 'undefined') return null;
-
-  try {
-    // Always use the current origin for API requests
-    // This ensures it works in both local and EC2 environments
-    const apiUrl = `${window.location.origin}/api`;
-    
-    // Get token from multiple possible sources
-    let token = null;
-    
-    // Try localStorage first
-    if (typeof localStorage !== 'undefined') {
-      token = localStorage.getItem("token");
-    }
-    
-    // Also check cookies if localStorage token isn't available
-    if (!token) {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-      const authTokenCookie = cookies.find(cookie => cookie.trim().startsWith('auth-token='));
-      
-      if (tokenCookie) {
-        token = decodeURIComponent(tokenCookie.split('=')[1].trim());
-      } else if (authTokenCookie) {
-        token = decodeURIComponent(authTokenCookie.split('=')[1].trim());
-      }
-    }
-    
-    const res = await fetch(apiUrl + url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      },
-      credentials: 'include' // Important for sending cookies
-    });
-    
-    return res.json();
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    return null;
-  }
-};
