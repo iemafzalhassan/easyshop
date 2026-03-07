@@ -1,0 +1,15 @@
+{{- if .Values.mongodb.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongodb-pv
+  namespace: {{ .Values.namespace }}
+spec:
+  capacity:
+    storage: {{ .Values.mongodb.persistence.size }}
+  accessModes:
+    - {{ .Values.mongodb.persistence.accessMode }}
+  storageClassName: {{ .Values.mongodb.persistence.storageClass }}
+  hostPath:
+    path: /data/mongodb
+{{- end }}
