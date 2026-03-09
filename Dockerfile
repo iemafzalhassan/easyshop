@@ -1,39 +1,22 @@
 # Stage 1: Build
-FROM node:20-alpine3.20 AS builder
-
+FROM node:20-alpine AS builder
 WORKDIR /app
-
 COPY package*.json ./
-
-RUN npm install
-
+RUN npm ci
 COPY . .
-
-# Build time env variables
-ARG MONGODB_URI
-ARG NEXTAUTH_SECRET
-ARG JWT_SECRET
-ARG NEXTAUTH_URL
-ARG NEXT_PUBLIC_API_URL
-
-ENV MONGODB_URI=$MONGODB_URI
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-ENV JWT_SECRET=$JWT_SECRET
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
+ARG MONGODB_URI NEXTAUTH_SECRET JWT_SECRET NEXTAUTH_URL NEXT_PUBLIC_API_URL
+ENV MONGODB_URI=$MONGODB_URI \
+    NEXTAUTH_SECRET=$NEXTAUTH_SECRET \
+    JWT_SECRET=$JWT_SECRET \
+    NEXTAUTH_URL=$NEXTAUTH_URL \
+    NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
-
 # Stage 2: Production
-FROM node:18-alpine
-
+FROM node:20-alpine AS production
 WORKDIR /app
-
 ENV NODE_ENV=production
-
 COPY --from=builder /app ./
-
+RUN npm ci --only=production
 EXPOSE 3000
-
-CMD ["npm", "start"] 
+CMD ["npm", "start"]
