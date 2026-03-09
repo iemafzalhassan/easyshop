@@ -5,9 +5,6 @@ on:
       - sumit-cicd-k8s
 
 jobs:
-  # ==========================================
-  # STAGE 1: TEST
-  # ==========================================
   test:
     runs-on: [self-hosted, kind, local]
     outputs:
@@ -41,10 +38,7 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: npm test --if-present
 
-  # ==========================================
-  # STAGE 2: BUILD
-  # ==========================================
-  build:
+  build_scan_push:
     runs-on: [self-hosted, kind, local]
     needs: test
     if: ${{ needs.test.outputs.changed == 'true' }}
@@ -65,14 +59,6 @@ jobs:
       - name: Build Migration Image
         run: docker build -f scripts/Dockerfile.migration -t ${{ secrets.DOCKER_USERNAME }}/easyshop-migration:${{ github.sha }} .
 
-  # ==========================================
-  # STAGE 3: SECURITY SCAN
-  # ==========================================
-  scan:
-    runs-on: [self-hosted, kind, local]
-    needs: [test, build]
-    if: ${{ needs.test.outputs.changed == 'true' }}
-    steps:
       - name: Install Trivy if not exists
         run: |
           which trivy || (
@@ -87,14 +73,6 @@ jobs:
       - name: Trivy Security Scan
         run: trivy image --image-src docker --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/easyshop:${{ github.sha }}
 
-  # ==========================================
-  # STAGE 4: PUSH
-  # ==========================================
-  push:
-    runs-on: [self-hosted, kind, local]
-    needs: [test, scan]
-    if: ${{ needs.test.outputs.changed == 'true' }}
-    steps:
       - name: Docker Login
         uses: docker/login-action@v3
         with:
@@ -107,13 +85,10 @@ jobs:
       - name: Push Migration Image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/easyshop-migration:${{ github.sha }}
 
-  # ==========================================
-  # STAGE 5: DEPLOY
-  # ==========================================
   deploy:
     runs-on: [self-hosted, kind, local]
-    needs: [test, push]
-    if: ${{ always() && needs.test.result == 'success' }}
+    needs: [test, build_scan_push]
+    if: ${{ needs.test.result == 'success' && needs.build_scan_push.result == 'success' }}
     steps:
       - name: Clone Repo
         uses: actions/checkout@v4
