@@ -19,9 +19,6 @@ spec:
         image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
         env:
         - name: MONGODB_URI
-          valueFrom:
-            secretKeyRef:
-              name: mongodb-secret
-              key: mongodb-uri
+          value: "mongodb://admin:password@mongodb.easyshop.svc.cluster.local:27017/easyshop?authSource=admin"
       restartPolicy: OnFailure
-  backoffLimit: 3
+  backoffLimit: 2
