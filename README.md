@@ -346,3 +346,4 @@ kind create cluster --name easyshop
 # Deploy the application locally
 kubectl apply -f kubernetes/
 ```
+# test
