@@ -347,3 +347,4 @@ kind create cluster --name easyshop
 kubectl apply -f kubernetes/
 ```
 # test
+# test
