@@ -58,7 +58,11 @@ jobs:
           .
 
       - name: Build Migration Image
-        run: docker build -f scripts/Dockerfile.migration -t ${{ secrets.DOCKER_USERNAME }}/easyshop-migration:${{ github.sha }} .
+        run: |
+          docker build \
+          --build-arg MONGODB_URI=${{ secrets.MONGODB_URI }} \
+          -f scripts/Dockerfile.migration \
+          -t ${{ secrets.DOCKER_USERNAME }}/easyshop-migration:${{ github.sha }} .
 
       - name: Install Trivy if not exists
         run: |
