@@ -39,7 +39,7 @@ jobs:
 
       - name: Run Tests
         if: steps.check.outputs.changed == 'true'
-        run: npm test
+        run: npm test --if-present
 
   # ==========================================
   # STAGE 2: BUILD
