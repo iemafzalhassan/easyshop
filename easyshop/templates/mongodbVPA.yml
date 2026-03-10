@@ -1,0 +1,21 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: mongodb-vpa
+  namespace: {{ .Values.namespace }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: mongodb
+  updatePolicy:
+    updateMode: {{ .Values.mongodb.vpa.updateMode }}
+  resourcePolicy:
+    containerPolicies:
+    - containerName: mongodb
+      minAllowed:
+        cpu: {{ .Values.mongodb.vpa.minAllowed.cpu }}
+        memory: {{ .Values.mongodb.vpa.minAllowed.memory }}
+      maxAllowed:
+        cpu: {{ .Values.mongodb.vpa.maxAllowed.cpu }}
+        memory: {{ .Values.mongodb.vpa.maxAllowed.memory }}
