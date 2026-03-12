@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "easyshop.fullname" . }}-migration
+  labels:
+    app.kubernetes.io/name: easyshop-migration
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: easyshop-migration
+    spec:
+      containers:
+      - name: migration
+        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://{{ .Values.mongodb.auth.rootUsername }}:{{ .Values.mongodb.auth.rootPassword }}@mongodb-service.{{ .Values.namespace }}.svc.cluster.local:27017/{{ .Values.mongodb.auth.database }}?authSource=admin"
+      restartPolicy: OnFailure
+  backoffLimit: 2
