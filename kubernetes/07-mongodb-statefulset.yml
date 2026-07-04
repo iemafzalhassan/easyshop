@@ -1,0 +1,35 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: mongodb
+  namespace: easyshop
+spec:
+  serviceName: "mongodb-service"  
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:6.0
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:    
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: mongodb-data
+          persistentVolumeClaim:    
+            claimName: mongodb-pvc    
