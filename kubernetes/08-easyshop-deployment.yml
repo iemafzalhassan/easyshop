@@ -1,0 +1,50 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: easyshop
+  namespace: easyshop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: easyshop
+  template:
+    metadata:
+      labels:
+        app: easyshop
+    spec:
+        containers:
+          - name: easyshop
+            image: raman20260/easyshop
+            imagePullPolicy: Always
+            ports:
+              - containerPort: 3000
+            envFrom:
+              - configMapRef:
+                  name: easyshop-config
+              - secretRef:
+                  name: easyshop-secrets
+            env:
+            - name: NEXTAUTH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: easyshop-config
+                  key: NEXTAUTH_URL
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: easyshop-secrets
+                  key: NEXTAUTH_SECRET
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: easyshop-secrets
+                  key: JWT_SECRET                  
+            resources:
+              requests:
+                cpu: 200m
+                memory: 256Mi
+              limits:      
+                cpu: 500m
+                memory: 512Mi
+
