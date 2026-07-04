@@ -1,0 +1,13 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata: 
+ name: mongodb-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce  
+  persistentVolumeReclaimPolicy: Retain  
+  hostPath:
+    path: /mnt/data
+    type: DirectoryOrCreate  
