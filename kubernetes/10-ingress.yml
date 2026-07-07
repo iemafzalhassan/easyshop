@@ -23,10 +23,10 @@ spec:
        - easyshop.letsdeployit.com
       secretName: easyshop-tls
   rules:
-    - host: easyshop.letsdeployit.com 
-      http: 
+    
+    - http: 
         paths: 
-        - pathType: prefix
+        - pathType: Prefix
           path: /
           backend: 
             service:
